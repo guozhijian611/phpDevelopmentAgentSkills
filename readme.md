@@ -104,3 +104,64 @@
 - 📊 关联统计 (withCount/withSum 等)
 - 💾 查询缓存/字段缓存
 - 🎯 最佳实践和代码片段
+
+---
+
+## artdesignpro
+
+基于 Art Design Pro 官方文档生成的 Vue 3 企业级中后台开发技能，包含现代化 UI 设计和高效开发工具。
+
+> **生成时间**: 2026-02-08
+
+### 参考资料
+
+| 文档     | 链接                                         | 内容                    |
+| -------- | -------------------------------------------- | ----------------------- |
+| 官方文档 | https://www.artd.pro/                        | Art Design Pro 完整文档 |
+| GitHub   | https://github.com/Daymychen/art-design-pro  | 项目源码                |
+| Gitee    | https://gitee.com/lingchen163/art-design-pro | 国内镜像                |
+
+### 生成内容
+
+- 📦 技术栈说明 (Vue 3/TypeScript/Vite/Element Plus/Tailwind CSS)
+- 📂 项目结构规范
+- 🛣️ 路由和菜单配置 (静态路由/动态路由/权限控制)
+- 📊 useTable 组合式函数 (智能缓存/分页/刷新策略)
+- 🔍 ArtSearchBar 搜索栏组件 (20+种表单控件)
+- 🔐 权限控制 (hasAuth/v-auth/v-roles)
+- 🎨 主题配置 (CSS 变量/Tailwind 工具类/主题切换)
+- 🎯 图标使用 (Iconify/Remix Icon)
+- 📡 API 接口规范
+- ⚙️ 环境变量配置
+- 📝 Git 提交规范 (Commitizen)
+
+---
+
+## elementplus
+
+基于 Element Plus 官方文档生成的 Vue 3 UI 组件库速查手册，涵盖中后台开发常用组件 API。
+
+> **生成时间**: 2026-02-08
+
+### 参考资料
+
+| 文档     | 链接                                         | 内容                  |
+| -------- | -------------------------------------------- | --------------------- |
+| 官方文档 | https://element-plus.org/                    | Element Plus 完整文档 |
+| GitHub   | https://github.com/element-plus/element-plus | 项目源码              |
+
+### 生成内容
+
+- 📊 Table 表格 (属性/列配置/事件/方法)
+- 📝 Form 表单 (验证规则/方法调用/自定义校验)
+- 💬 Dialog 对话框 (属性/插槽/事件)
+- 🔽 Select 选择器 (单选/多选/远程搜索/分组)
+- ⌨️ Input 输入框 (类型/插槽/事件)
+- 📄 Pagination 分页 (布局/事件)
+- ⚠️ MessageBox 弹框 (alert/confirm/prompt)
+- 📤 Upload 上传 (钩子函数/照片墙/拖拽)
+- 🌲 TreeSelect 树选择器 (懒加载/多选)
+- 📅 DatePicker 日期选择器 (类型/快捷选项)
+- 🔗 Cascader 级联选择器 (懒加载/可选任意级)
+- 🌳 Tree 树形控件 (筛选/拖拽/自定义节点)
+- 🔧 工具函数 (ElMessage/ElNotification/ElLoading)
