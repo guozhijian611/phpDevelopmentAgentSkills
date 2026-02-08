@@ -955,3 +955,483 @@ env($key, $default)         // 获取环境变量
 
 - 设置 `config/app.php` 中的 `debug` 为 `true` 开启调试模式
 - 日志文件位于 `runtime/logs/` 目录
+
+---
+
+## 自定义进程
+
+webman 支持创建自定义进程，可以实现 WebSocket 服务、定时任务等功能。
+
+### WebSocket 服务
+
+创建 `app/Pusher.php`:
+
+```php
+<?php
+namespace app;
+
+use Workerman\Connection\TcpConnection;
+
+class Pusher
+{
+    public function onConnect(TcpConnection $connection)
+    {
+        echo "onConnect\n";
+    }
+
+    public function onWebSocketConnect(TcpConnection $connection, $http_buffer)
+    {
+        echo "onWebSocketConnect\n";
+    }
+
+    public function onMessage(TcpConnection $connection, $data)
+    {
+        $connection->send($data);
+    }
+
+    public function onClose(TcpConnection $connection)
+    {
+        echo "onClose\n";
+    }
+}
+```
+
+在 `config/process.php` 中配置:
+
+```php
+return [
+    'websocket_test' => [
+        'handler' => app\Pusher::class,
+        'listen' => 'websocket://0.0.0.0:8888',
+        'count' => 1,
+    ],
+];
+```
+
+### 定时任务进程
+
+创建 `app/TaskTest.php`:
+
+```php
+<?php
+namespace app;
+
+use Workerman\Timer;
+use support\Db;
+
+class TaskTest
+{
+    public function onWorkerStart()
+    {
+        // 每隔 10 秒执行一次
+        Timer::add(10, function(){
+            Db::table('users')->where('regist_timestamp', '>', time()-10)->get();
+        });
+    }
+}
+```
+
+配置:
+
+```php
+return [
+    'task' => [
+        'handler' => app\TaskTest::class
+    ],
+];
+```
+
+> **注意**: `listen` 省略则不监听任何端口，`count` 省略则进程数默认为 1。
+
+---
+
+## 事件系统 (webman-event)
+
+### 安装
+
+```bash
+composer require tinywan/webman-event
+```
+
+### 定义事件
+
+`extend/event/LogErrorWriteEvent.php`:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace extend\event;
+
+use Symfony\Contracts\EventDispatcher\Event;
+
+class LogErrorWriteEvent extends Event
+{
+    const NAME = 'log.error.write';
+
+    public array $log;
+
+    public function __construct(array $log)
+    {
+        $this->log = $log;
+    }
+
+    public function handle()
+    {
+        return $this->log;
+    }
+}
+```
+
+### 配置事件监听
+
+`config/event.php`:
+
+```php
+return [
+    'listener' => [
+        \extend\event\LogErrorWriteEvent::NAME => \extend\event\LogErrorWriteEvent::class,
+    ],
+    'subscriber' => [],
+];
+```
+
+### 触发事件
+
+```php
+use Tinywan\EventManager\EventManager;
+use extend\event\LogErrorWriteEvent;
+
+$error = [
+    'errorMessage' => '错误消息',
+    'errorCode' => 500
+];
+EventManager::trigger(new LogErrorWriteEvent($error), LogErrorWriteEvent::NAME);
+```
+
+---
+
+## 验证器
+
+### ThinkPHP 验证器
+
+安装:
+
+```bash
+composer require topthink/think-validate
+```
+
+创建验证器 `app/index/validate/User.php`:
+
+```php
+<?php
+namespace app\index\validate;
+
+use think\Validate;
+
+class User extends Validate
+{
+    protected $rule = [
+        'name'  => 'require|max:25',
+        'age'   => 'number|between:1,120',
+        'email' => 'email',
+    ];
+
+    protected $message = [
+        'name.require' => '名称必须',
+        'name.max'     => '名称最多不能超过25个字符',
+        'age.number'   => '年龄必须是数字',
+        'age.between'  => '年龄只能在1-120之间',
+        'email'        => '邮箱格式错误',
+    ];
+}
+```
+
+使用:
+
+```php
+$data = [
+    'name'  => 'thinkphp',
+    'email' => 'thinkphp@qq.com',
+];
+
+$validate = new \app\index\validate\User;
+
+if (!$validate->check($data)) {
+    var_dump($validate->getError());
+}
+```
+
+### Workerman/Validation
+
+安装:
+
+```bash
+composer require workerman/validation
+```
+
+使用:
+
+```php
+use Respect\Validation\Validator as v;
+
+$data = v::input($request->post(), [
+    'nickname' => v::length(1, 64)->setName('昵称'),
+    'username' => v::alnum()->length(5, 64)->setName('用户名'),
+    'password' => v::length(5, 64)->setName('密码')
+]);
+```
+
+---
+
+## 分页组件
+
+### 安装
+
+```bash
+composer require "jasongrimes/paginator:^1.0.3"
+```
+
+### 使用
+
+```php
+use JasonGrimes\Paginator;
+
+$total_items = 1000;
+$items_perPage = 50;
+$current_page = (int)$request->get('page', 1);
+$url_pattern = '/user/get?page=(:num)';
+
+$paginator = new Paginator($total_items, $items_perPage, $current_page, $url_pattern);
+
+return view('user/get', ['paginator' => $paginator]);
+```
+
+视图中使用:
+
+```php
+<?= $paginator; ?>
+```
+
+---
+
+## 环境变量 (phpdotenv)
+
+### 安装
+
+```bash
+composer require vlucas/phpdotenv
+```
+
+### 创建 .env 文件
+
+```env
+DB_HOST = 127.0.0.1
+DB_PORT = 3306
+DB_NAME = test
+DB_USER = foo
+DB_PASSWORD = 123456
+```
+
+### 在配置中使用
+
+```php
+return [
+    'connections' => [
+        'mysql' => [
+            'host' => getenv('DB_HOST'),
+            'port' => getenv('DB_PORT'),
+            'database' => getenv('DB_NAME'),
+            'username' => getenv('DB_USER'),
+            'password' => getenv('DB_PASSWORD'),
+        ],
+    ],
+];
+```
+
+> **提示**: 建议将 `.env` 文件加入 `.gitignore`，创建 `.env.example` 作为配置样例。
+
+---
+
+## 权限控制 (Casbin)
+
+### 安装
+
+```bash
+composer require tinywan/webman-permission
+```
+
+### 快速开始
+
+```php
+use webman\permission\Permission;
+
+// 给用户添加权限
+Permission::addPermissionForUser('eve', 'articles', 'read');
+
+// 给用户添加角色
+Permission::addRoleForUser('eve', 'writer');
+
+// 给角色添加权限
+Permission::addPolicy('writer', 'articles', 'edit');
+```
+
+### 权限检查
+
+```php
+if (Permission::enforce("eve", "articles", "edit")) {
+    // 允许编辑文章
+} else {
+    // 拒绝请求
+}
+```
+
+### 授权中间件
+
+```php
+<?php
+namespace app\middleware;
+
+use Webman\MiddlewareInterface;
+use Webman\Http\Response;
+use Webman\Http\Request;
+use webman\permission\Permission;
+
+class AuthorizationMiddleware implements MiddlewareInterface
+{
+    public function process(Request $request, callable $next): Response
+    {
+        $uri = $request->path();
+        $userId = 10086; // 从 session 获取
+        $action = $request->method();
+
+        if (!Permission::enforce((string) $userId, $uri, strtoupper($action))) {
+            throw new \Exception('没有该接口访问权限');
+        }
+
+        return $next($request);
+    }
+}
+```
+
+---
+
+## 慢业务处理
+
+### 方案一: 消息队列
+
+适用于需要异步处理的大量请求，结果通过 WebSocket 等方式推送给客户端。
+
+### 方案二: 新增 HTTP 端口
+
+在 `config/process.php` 中新增:
+
+```php
+return [
+    'task' => [
+        'handler' => \Webman\App::class,
+        'listen' => 'http://0.0.0.0:8686',
+        'count' => 8,
+        'constructor' => [
+            'requestClass' => \support\Request::class,
+            'logger' => \support\Log::channel('default'),
+            'appPath' => app_path(),
+            'publicPath' => public_path()
+        ]
+    ]
+];
+```
+
+可以通过 nginx 代理实现无感知端口切换:
+
+```nginx
+upstream webman {
+    server 127.0.0.1:8787;
+    keepalive 10240;
+}
+
+upstream task {
+    server 127.0.0.1:8686;
+    keepalive 10240;
+}
+
+server {
+    server_name webman.com;
+    listen 80;
+
+    # 以 /task 开头走 8686 端口
+    location /task {
+        proxy_pass http://task;
+    }
+
+    # 其他请求走 8787 端口
+    location / {
+        proxy_pass http://webman;
+    }
+}
+```
+
+---
+
+## 常用插件
+
+| 插件                      | 功能               | 安装命令                                     |
+| ------------------------- | ------------------ | -------------------------------------------- |
+| webman/database           | Laravel 数据库组件 | `composer require webman/database`           |
+| webman/blade              | Blade 视图引擎     | `composer require webman/blade`              |
+| webman/push               | WebSocket 推送     | `composer require webman/push`               |
+| tinywan/webman-event      | 事件系统           | `composer require tinywan/webman-event`      |
+| tinywan/webman-permission | Casbin 权限        | `composer require tinywan/webman-permission` |
+| workerman/validation      | 验证器             | `composer require workerman/validation`      |
+| vlucas/phpdotenv          | 环境变量           | `composer require vlucas/phpdotenv`          |
+
+---
+
+## 部署建议
+
+### Nginx 配置
+
+```nginx
+upstream webman {
+    server 127.0.0.1:8787;
+    keepalive 10240;
+}
+
+server {
+    server_name your-domain.com;
+    listen 80;
+    access_log off;
+    root /path/webman/public;
+
+    location / {
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Host $host;
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        if (!-f $request_filename) {
+            proxy_pass http://webman;
+        }
+    }
+}
+```
+
+### 进程管理
+
+推荐使用 Supervisor 管理 webman 进程:
+
+```ini
+[program:webman]
+command=php /path/webman/start.php start
+directory=/path/webman
+user=www
+numprocs=1
+autostart=true
+autorestart=true
+startsecs=1
+startretries=10
+exitcodes=0
+stopasgroup=true
+killasgroup=true
+stdout_logfile=/var/log/webman.log
+stderr_logfile=/var/log/webman_error.log
+```
