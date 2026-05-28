@@ -7,6 +7,25 @@ description: 基于 Webman 的 SaiAdmin 后台管理系统开发规范，包含�
 
 SaiAdmin 是基于 Webman 的高性能后台管理系统框架，采用 MVC + Logic 分层架构，支持 ThinkORM 和 Eloquent ORM。
 
+## 通用项目经验与需确认项
+
+进入任意 SaiAdmin/Webman 项目后，先找项目级约定文件，例如 `AGENTS.MD`、`README.md`、部署脚本或团队文档。以下经验是通用排查原则，但目录、数据库、部署目标、生成策略等项目差异必须先确认；无法从仓库判断时，直接询问用户。
+
+- 确认后端目录、前端目录、插件目录和当前数据库，不要把一个项目的路径套到另一个项目。
+- 确认业务代码边界，通常不要把业务功能直接写进 SaiAdmin 核心插件，除非是在修复框架集成问题或用户明确要求。
+- 确认项目是否使用插件安装 SQL。若项目不走安装流程，不要新增或编辑 `db/install.sql`；如需沉淀数据库变更，询问用户应放在补丁 SQL、迁移文件还是直接以当前数据库为准。
+- 确认用户讨论的是本地环境、测试环境还是线上环境；涉及“刚刚生成”“当前数据”“截图里的记录”时，不要自动联想到远端库。
+- 确认是否允许运行前端构建、依赖安装、数据库同步、核心升级等耗时或高影响操作；不确定就先问。
+- `php webman sai:orm`、`php webman sai:upgrade`、生产部署、数据库覆盖等操作必须有明确用户授权。
+
+### 通用常见误判
+
+- 菜单或按钮权限写入数据库后仍不显示，通常先检查 SaiAdmin 用户菜单/权限缓存和旧登录会话。
+- SaiCode 生成基础 CRUD 后，仍必须人工检查菜单、按钮权限、`Permission` 注解、前端 API 路径和 git diff。
+- Webman 是常驻进程；改路由、配置、控制器、Logic、服务类后，通常需要重启进程再验证。
+- 前端代理前缀不等于后端真实路由前缀；以后端 `php webman route:list` 和前端请求配置能对上为准。
+- 部署目标、静态资源目录、`.env`、`runtime/`、上传目录、存储目录都必须按当前项目确认，不能沿用其他项目经验。
+
 ## 📁 目录结构
 
 ### 后端目录结构 (插件模式)
@@ -35,7 +54,7 @@ plugin/[module]/
 ├── config/
 │   └── route.php               # 路由配置
 └── db/
-    └── install.sql             # 数据库脚本
+    └── install.sql             # 可选插件安装脚本；是否使用必须按项目确认
 ```
 
 ### 前端目录结构
@@ -159,6 +178,9 @@ use plugin\saiadmin\basic\think\BaseLogic;  // 或 eloquent\BaseLogic
 
 class [Table]Logic extends BaseLogic
 {
+    // 若当前项目启用了数据权限，且该业务表需要按创建人/部门过滤，则开启：
+    // protected bool $scope = true;
+
     public function __construct()
     {
         $this->model = new [Table]();
@@ -271,10 +293,14 @@ class [Table]Validate extends BaseValidate
 
 ```php
 // plugin/your_plugin/config/route.php
+use Webman\Route;
+
 Route::group('/api', function () {
     fastRoute('article', \plugin\your_plugin\app\admin\controller\[business]\[Table]Controller::class);
 });
 ```
+
+> 注意：不要把前端代理前缀直接等同为后端业务路由前缀。新增或修改路由后，在后端目录执行 `php webman route:list`，以前端 API 文件里的 URL 和路由列表能对上为准。
 
 ---
 
@@ -945,6 +971,67 @@ php webman sai:orm
 php webman sai:upgrade
 ```
 
+`sai:orm`、`sai:upgrade` 会影响项目基础行为，只有在用户明确要求或项目文档明确授权时才执行。
+
+---
+
+## 通用 QA 与排查清单
+
+### 后端文件检查
+
+- 新增或修改 PHP 文件后，对改动文件执行 `php -l path/to/file.php`。
+- 在后端目录执行 `php webman route:list`，确认接口已被 Webman 装载。
+- Controller 只做权限入口、参数接收、validate 调用和 logic 调用。
+- Logic 放业务查询、事务、导入导出和复杂处理。
+- Model 继承 `plugin\saiadmin\basic\think\BaseModel`，表名、主键、搜索器要清晰。
+- Validate 分 `save`、`update` 等场景。
+
+### 菜单、按钮和权限
+
+- 权限 slug 统一使用 `<namespace>:<package>:<business>:<action>`。
+- 数据库菜单和角色关系正确但页面不显示时，先检查缓存和会话。
+- 重点关注 `UserMenuCache::getUserMenu($uid)`、`UserAuthCache::getUserAuth($uid)`、`UserInfoCache`。
+- 可通过 SaiAdmin 内置清缓存逻辑或重新保存角色权限触发缓存更新。
+- 清缓存后重新登录验证，避免旧 token 或旧会话误导判断。
+
+### DataScope 数据权限
+
+- 需要数据权限控制的业务表必须有 `created_by` 字段。
+- 对应 Logic 必须继承 ThinkORM 版 `BaseLogic`。
+- 如果项目已接入 DataScope，且该业务模块需要受数据权限控制，对应 Logic 必须显式开启 `protected bool $scope = true;`。
+- 角色 `data_scope` 和 `sa_system_role_dept` 要同时检查。
+- 不能只用超级管理员验证数据范围；必须用普通角色账号验证。
+- SaiCode 重新生成后，重点检查 `$scope` 是否被覆盖。
+
+### SaiCode 生成后检查
+
+- 生成前先预览，不要直接假设生成结果可用。
+- 业务生成优先使用插件模式；具体 `namespace`、`package_name`、`business_name` 按项目命名规范或用户确认值填写。
+- `generate_path`、前后端相对位置、生成目标目录必须按当前项目确认。
+- `generateFile` 依赖后端 `config/app.php` 的 `debug=true`，生产或非 debug 模式不可用。
+- 生成后检查后端 Controller/Logic/Model/Validate、前端 API、菜单、按钮权限和 git diff。
+- 不要认为 SaiCode 会完整补齐按钮权限点。
+
+### Webman 常驻进程
+
+- 改路由、配置、控制器、Logic、服务类后，重启 Webman 再验证。
+- 本地通常使用 `php webman restart`；线上部署命令、工作目录和守护模式参数必须按项目部署文档或用户确认执行。
+- 代码已修改但接口仍表现为旧逻辑时，优先确认进程是否已重启。
+- 仍异常时查看项目约定的 runtime/log 目录。
+
+### 前后端路径
+
+- 前端 API 使用 `import request from '@/utils/http'`。
+- 前端代理前缀、Vite 代理目标和后端真实路由必须按当前项目配置确认。
+- 权限失败和 404 要分开判断：先看 HTTP 状态和响应 message，再看路由列表、菜单权限和缓存。
+
+### 部署相关经验
+
+- 部署目标目录、静态资源目录和 Web 根目录必须先从部署脚本、服务器配置或用户确认中核实。
+- 同步后检查目标目录的 `index.html`、静态资源目录和关键入口文件，不能只相信同步命令成功。
+- 保护 `.env`、`runtime/`、上传目录、存储目录和日志目录，除非用户明确要求覆盖或清理。
+- 使用 `rsync` 前确认本机/服务器 rsync 兼容性；不确定时选择更通用的参数或先询问用户。
+
 ---
 
 ## 📋 快速开发清单
@@ -965,6 +1052,13 @@ php webman sai:upgrade
    - 编辑弹窗：`[模块]/[功能]/modules/edit-dialog.vue`
 
 3. **配置权限菜单** (后台系统配置)
+
+4. **验证与缓存**
+   - `php -l` 检查改动过的 PHP 文件
+   - 在后端目录执行 `php webman route:list`
+   - 涉及权限时清理或刷新用户菜单/权限缓存
+   - 涉及数据权限时用普通角色账号验证
+   - 修改路由、配置、服务类后重启 Webman
 
 ---
 

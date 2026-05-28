@@ -1,5 +1,38 @@
 # AI生成skills说明
 
+## unibest
+
+基于 unibest 官方文档生成的 uni-app 多端开发技能，包含脚手架创建、路由配置、tabbar 策略、UI 库、请求封装、App 打包和 CLI 开发规范。
+
+> **生成时间**: 2026-05-28
+
+### 参考资料
+
+| 文档         | 链接                                      | 内容                                 |
+| ------------ | ----------------------------------------- | ------------------------------------ |
+| 官方文档     | https://unibest.tech/                     | unibest 完整开发文档                 |
+| 文档源码     | https://github.com/unibest-tech/unibest-docs | VitePress 文档源码                   |
+| 项目源码     | https://github.com/feige996/unibest       | unibest / create-unibest 项目源码    |
+| 本地参考手册 | 参考手册/unibest-docs/docs               | 已下载的 Markdown 文档               |
+| 本地模板源码 | 参考手册/unibest                         | 已浅克隆的 unibest base 模板源码     |
+
+### 生成内容
+
+- 项目定位与 `main` / `base` 分支说明
+- `pnpm create unibest` 创建项目、追加 Feature、指定 UI / 平台
+- 运行发布命令与 H5 / 小程序 / App 输出目录
+- `pages.config.ts`、`manifest.config.ts`、`definePage`、layout、`App.ku.vue` 配置规则
+- Tabbar 策略、状态同步和动态图标注意事项
+- UI 库选型，重点覆盖 `wot-ui-v2`
+- UnoCSS、iconfont、SVG 跨端限制
+- 请求封装、上传、多后端地址和 OpenAPI 生成
+- Pinia 持久化、登录策略、token 认证建议
+- i18n、环境变量、App/HBuilderX、原生插件处理
+- FAQ 排错清单、升级策略、create-unibest CLI 开发流程
+- 已补充 `references/source-map.md`、`references/workflows.md`、`references/troubleshooting.md` 三份深度参考
+
+---
+
 ## saiadmin6.0
 
 基于 SaiAdmin 6.0 官方文档生成的开发技能，包含前后端开发规范和模板。
