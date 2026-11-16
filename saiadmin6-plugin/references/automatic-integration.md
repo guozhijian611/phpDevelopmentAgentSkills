@@ -53,3 +53,7 @@ Board Studio 2.1.1，SaiAdmin 6.1.5 / saipackage 6.1.0 的已验证 Phinx 安装
 - [锁定版本的自动接入服务](https://github.com/guozhijian611/saiadmin-boardstudio/blob/ebc183adcce932ffc9aaa7e770533a7c76a467c2/server/plugin/boardstudio/app/service/FrontendIntegration.php)
 - [迁移接线与卸载前数据保护](https://github.com/guozhijian611/saiadmin-boardstudio/blob/ebc183adcce932ffc9aaa7e770533a7c76a467c2/server/plugin/boardstudio/db/migrations/20261116000200_automate_frontend_integration.php)
 - [实际验收记录](https://github.com/guozhijian611/saiadmin-boardstudio/blob/ebc183adcce932ffc9aaa7e770533a7c76a467c2/docs/auto-integration.md)
+
+## 2.2.0 权限接入补充
+
+角色授权树若未调用宿主菜单翻译器，自动接入覆盖该最小标签片段；PG 角色菜单 API 若重现 bigint 批量问题，仅对已核对语句提供兼容。前后端全部目标在同一计划预检/备份/写入/回退；新增第四个目标时不能沿用只覆盖前两个文件的旧测试。契约变更追加迁移，不修改已执行迁移；先检查全部业务表，再清理授权与管理片段。失败时关闭迁移事务，原生已修复与未知实现分别处理。条件与来源见 [实测排错](runtime-pitfalls.md)，不默认给其它插件套用该后端修复。

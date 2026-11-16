@@ -66,6 +66,8 @@ saipackage6.1.0 在 Linux 安装/卸载结束时立即 SIGUSR1，有时导致 HT
 
 安装返回成功后等待新路由可用：在最多15秒内有界轮询（无写入的GET），服务仍在reload时允许短暂404/连接断开。超时后保留日志检查，不自动重装。固定sleep 1秒不足以验证多worker收敛。
 
+还须同时核对 package app/version/state、迁移和 schema。PG 健康检查已指定 TCP host；核心初始化延迟重载中断插件迁移等问题见 [实测排错](runtime-pitfalls.md)。新的 [权限示例](permission-example.md) 提供显式初始化器与双库命令，不依赖 Board Studio 或历史测试目录；原 labphinx 仍只是生命周期夹具。
+
 ## 独立生成示例包
 
 在Skill根目录运行：

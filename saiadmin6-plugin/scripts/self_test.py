@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify a relocated skill without any prior session files. Requires Python3.9+; Compose optional."""
+"""Verify a relocated skill without prior session files. Requires Python3.9+, PHP8.4/PDO SQLite; Compose optional."""
 import argparse
 import json
 from pathlib import Path
@@ -28,8 +28,20 @@ def main():
                 raise AssertionError('Invalid input accepted: '+script)
             return result
         run('build_example.py', '--output-dir', root/'output')
-        for name in ('lab.py', 'package.py', 'fix_reload.py', 'build_example.py', 'saistore.py'):
+        run('build_permission_example.py', '--output-dir', root/'permissions output')
+        subprocess.run(['php',str(skill/'tests/permissions.php')],cwd=root,check=True)
+        subprocess.run([sys.executable,str(skill/'tests/test_fixture.py')],cwd=root,check=True)
+        for name in ('lab.py', 'package.py', 'fix_reload.py', 'build_example.py', 'saistore.py',
+                     'build_permission_example.py','prepare_fixture_lab.py','fixture_package.py','test_permissions_lab.py'):
             run(name, '--help')
+        for version,count in [('1.0.0',1),('1.1.0',2)]:
+            with zipfile.ZipFile(root/'permissions output'/('labpermit-'+version+'.zip')) as archive:
+                assert archive.testzip() is None
+                assert len([n for n in archive.namelist() if '/migrations/' in n])==count
+                assert not any(n.endswith('permission_fixture.php') for n in archive.namelist())
+                controller=archive.read('plugin/labpermit/app/controller/ItemsController.php').decode()
+                assert ('labpermit:items:' in controller)==(version=='1.1.0')
+                assert ('labpermit:legacy:' in controller)==(version=='1.0.0')
         for version, count in [('1.0.0', 1), ('1.0.1', 2)]:
             with zipfile.ZipFile(root/'output'/('labphinx-'+version+'.zip')) as archive:
                 assert 'info.ini' in archive.namelist()
@@ -73,6 +85,7 @@ def main():
                 config = json.loads((lab/'compose.json').read_text())
                 assert config['services']['backend']['environment']['DB_TYPE'] == db
                 assert 'build' in config['services']['backend']
+                if db=='pgsql':assert '-h 127.0.0.1' in config['services']['db']['healthcheck']['test'][1]
                 if not args.skip_docker:
                     run('lab.py','compose',lab,'config','--quiet')
                 target = lab/'app/server/plugin/saipackage/app/logic/InstallLogic.php'
@@ -93,7 +106,7 @@ def main():
         finally:
             for lab in labs:
                 shutil.rmtree(lab)
-        print('PASS: relocated scripts, two example versions, invalid packages, isolated MySQL/PostgreSQL config, copy exclusions, idempotent patch')
+        print('PASS: relocated scripts, two lifecycle and two permission ZIPs, offline registry, invalid packages, isolated MySQL/PostgreSQL TCP config, copy exclusions, idempotent patch')
 
 if __name__ == '__main__':
     main()

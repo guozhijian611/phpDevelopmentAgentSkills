@@ -29,3 +29,5 @@
 有界诊断：`compose LAB logs --tail 100 backend frontend db`；核对 runtime/saipackage/<app>/info.ini、实际文件、迁移记录、表和菜单；检查前端 Console/Network。请求失败后先查状态，勿立即再点安装。若安装中 reload 导致断连，先验证服务和状态，不推定数据库事务回滚。
 
 报告逐项使用“通过 / 失败 / 未测 / 不适用”，注明逻辑层、HTTP、UI 层次。容器存活、PHP lint、前端 build 只分别证明环境/语法/构建，不能替代业务测试。
+
+独立运行入口见 [权限示例](permission-example.md)。授权拒绝检查 JSON code 与实际数据，不将 HTML 500 当作正常 403。PG 另测 TCP、bigint 批量绑定及错误后的事务恢复，尤其保护卸载拒绝之后；安装共同确认 app/version/state、迁移、schema 与认证接口，不能只看路由。已复现原因与适配边界见 [运行排错](runtime-pitfalls.md)。

@@ -22,6 +22,8 @@ description: 开发、打包和验证 SaiAdmin 6.x 插件，默认接入系统�
 - 列表、详情、修改、删除之外，导出、统计、联表、批量、自定义 SQL 和嵌套资源也必须使用同一数据范围。确认当前 ORM/基类的实际覆盖，缺少能力时声明依赖或实现插件内受测适配，不盲目覆盖核心或要求手动执行参考包 SQL。
 - 用有相同功能权限、不同数据范围的受限账号直接请求接口验证；包括越权 ID、伪造归属、混合批次与权限变更后的缓存。验收同时覆盖菜单权限和记录范围；卸载仅清理插件自己的权限资源。
 
+可运行的 [权限示例](references/permission-example.md) 提供两版 ZIP、旧授权迁移和真实双库 HTTP 测试。遇到 PHP 8.4 权限拒绝变 HTML 500、按钮指令失效、授权树显示语言键或 PG 42804 时，阅读 [实测排错](references/runtime-pitfalls.md)；只适配已核对实现，不默认复制业务插件的核心兼容片段。
+
 ## 前端主题与多语言（必须遵守）
 
 生成或修改前端代码前，必须阅读 [前端集成约定](references/frontend-conventions.md)，检查目标宿主的主题变量、明暗切换、组件封装、语言注册和翻译调用方式。以目标项目实际实现为准，不自行另建主题或语言系统。
@@ -56,6 +58,8 @@ description: 开发、打包和验证 SaiAdmin 6.x 插件，默认接入系统�
 依照 [验收矩阵](references/acceptance.md) 至少完成：首次安装、同版本重复上传行为、卸载再安装、另一全新环境再次安装；有升级需求时加旧版→新版和新版全新安装。保留成功断言和失败证据。失败重试前检查文件/数据库/安装状态，修包后换干净实验室；同一未知失败最多原样重试一次，不盲目反复执行 SQL。
 
 用 `python3 scripts/build_example.py --output-dir OUTPUT` 生成两版示例包；用 `python3 scripts/self_test.py` 做独立可迁移性检查。可用 `assets/phinx-fixture/` 作为双数据库测试基线：包含菜单、种子和两次迁移，示例业务数据仅用于一次性环境。
+
+权限示例另用 `python3 scripts/build_permission_example.py --output-dir OUTPUT` 生成。self_test 是离线/配置检查；prepare_fixture_lab.py 与 test_permissions_lab.py 才在明确指定的全新实验室执行真实初始化和权限生命周期。安装成功同时核对版本、state、迁移及认证接口，不以路由可用代替迁移完成，不对断开的写请求盲目重试。
 
 ## 交付
 

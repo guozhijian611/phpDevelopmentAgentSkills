@@ -7,7 +7,7 @@
 | Skill | 用途 | 本次更新（2026-11-16） |
 | --- | --- | --- |
 | [saiadmin](saiadmin/SKILL.md) | SaiAdmin 6 业务分层、权限与页面开发 | 系统与记录范围权限、主题、多语言及插件发行分工 |
-| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 菜单/API 与 DataScope 默认接入、升级/卸载保护、独立 Docker 和上传 CLI |
+| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 权限升级映射、五范围双库 API 示例、PG 排错、独立 Docker 和上传 CLI |
 | [saicode](saicode/SKILL.md) | 表装载、字段/关联、CRUD 生成与撤回 | 生成后权限接入、可搬移 CLI、预检、生成所有权与撤回保护 |
 | [webman](webman/SKILL.md) | Webman 服务、路由、进程与数据库 | 2.1 协程/连接池、事务与请求隔离，2.2 路由边界 |
 | [thinkorm](thinkorm/SKILL.md) | ThinkORM 查询、模型、关联和事务 | 区分 3.x/4.x、Entity 分层与宿主适配 |
@@ -52,7 +52,7 @@ cp -R ./saiadmin6-plugin "${CODEX_HOME:-$HOME/.codex}/skills/"
 
 插件开发默认接入宿主菜单、按钮及服务端 API 权限，并按业务实体接入 DataScope 的全部、自定义部门、本部门、本部门及子部门、本人五种范围。新增归属由服务器确定，普通更新不可修改所有者；自定义 SQL、导出/统计、联表、批量与子资源同样受限。租户、客户或负责人边界另外叠加；共享资源明确采用的策略。
 
-自身权限点随安装/升级幂等注册，保留已有授权，卸载不删除共享角色、部门或系统数据权限入口。缺少能力时核对正式依赖或插件内适配，不要求手工运行参考包 SQL。详见 [权限点与 DataScope 接入](saiadmin6-plugin/references/permissions-data-scope.md)，包含给定参考包的实际差异、缓存与五范围验收；仅安装 DataScope、隐藏按钮或设置 scope 属性不代表业务验收通过。本次核对了用户提供的参考包，并用临时 PHP 替身复现三个基类行为，未把它安装到业务系统，也未宣称完成真实数据库/浏览器权限验收。
+自身权限点随安装/升级幂等注册，保留已有授权，卸载不删除共享角色、部门或系统数据权限入口。缺少能力时核对正式依赖或插件内适配，不要求手工运行参考包 SQL。详见 [权限点与 DataScope 接入](saiadmin6-plugin/references/permissions-data-scope.md)。参考包本身只做源码与局部探针核对；另结合 Board Studio 2.2.0 的双库/浏览器验收补充 [运行排错](saiadmin6-plugin/references/runtime-pitfalls.md)，并新增独立的纯 API 权限示例。不把其它插件的结果算作任意业务已受控。
 
 ### 宝塔官方同步方式
 
@@ -121,7 +121,14 @@ python3 saiadmin6-plugin/scripts/self_test.py
 python3 saiadmin6-plugin/scripts/self_test.py --skip-docker
 ```
 
-两版 Phinx 示例包用于首装、升级测试，不是生产业务插件。真实测试还需用户明确指定的 SaiAdmin 基线、Docker、Composer/前端依赖和网络。环境每轮独立创建，只清理对应 Compose 项目，不运行全局 prune。
+两版 Phinx 示例包用于表/种子生命周期；另可生成两版 labpermit 纯 API 权限示例：
+
+```sh
+python3 saiadmin6-plugin/scripts/build_permission_example.py --output-dir ../permission-examples
+php saiadmin6-plugin/tests/permissions.php
+```
+
+权限示例覆盖旧授权迁移、七动作、五范围、统计/子资源、归属防伪、混合批量原子性、撤权与保护卸载。离线自检需要 PHP 8.4 CLI 与 PDO SQLite；真实 MySQL/PostgreSQL HTTP 流程另需指定 SaiAdmin 基线、Docker、Composer 依赖和网络，命令见 [独立权限示例](saiadmin6-plugin/references/permission-example.md)。测试 helper 不放进安装包；每轮独立创建，只清理对应项目，不运行全局 prune。
 
 详细说明：[安装器契约](saiadmin6-plugin/references/plugin-contract.md)、[自动接入与卸载](saiadmin6-plugin/references/automatic-integration.md)、[系统与数据权限](saiadmin6-plugin/references/permissions-data-scope.md)、[前端约定](saiadmin6-plugin/references/frontend-conventions.md)、[Docker 实验室](saiadmin6-plugin/references/docker-lab.md)、[验收矩阵](saiadmin6-plugin/references/acceptance.md)。源码接入自动化不等于自动完成宿主依赖安装、生产构建或部署。
 
@@ -135,6 +142,6 @@ uv run --with PyYAML python tools/verify.py
 uv run --with PyYAML python tools/verify.py --skip-docker
 ```
 
-验证包括 skill 元数据/本地引用、宝塔上游文件完整性、Python/PHP 语法、独立 CLI 帮助、SaiCode 临时宿主回归、SaiStore 本机 HTTP 协议回归、插件脚本迁移与示例 ZIP。GitHub Actions 执行同一检查。测试不代表每个框架 API 或业务插件均已通过真实数据库、浏览器或生产验收；历史实测与本轮文件/夹具检查分开记录。
+验证包括 skill 元数据/本地引用、宝塔上游文件完整性、Python/PHP 语法、独立 CLI 帮助、SaiCode 临时宿主回归、SaiStore 本机 HTTP 协议回归、插件脚本搬移、四个示例 ZIP、SQLite 权限登记和安装状态/有界重试回归。GitHub Actions 执行同一检查。测试不代表每个框架 API 或业务插件均已通过真实数据库、浏览器或生产验收；历史实测与本轮文件/夹具检查分开记录。
 
 仓库根 `参考手册/` 保留历史离线资料，不作为当前上游版本保证，也不是单独安装 skill 的必需依赖。其中三个 unibest 参考源码子模块的来源记录于 `.gitmodules`，默认非递归克隆不会下载它们。需要源码时按各 skill 的版本记录使用用户项目或官方锁定链接。宝塔遵循其目录内 MIT LICENSE；其它材料保留原有来源，第三方文档/代码的权利以其上游许可为准。
