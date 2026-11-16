@@ -1,5 +1,72 @@
 # AI生成skills说明
 
+## saiadmin6-plugin
+
+[SaiAdmin 6 插件开发 skill](saiadmin6-plugin/SKILL.md)，用于开发、打包和验收可通过 saipackage 安装的独立插件。重点覆盖发行 ZIP 与安装生命周期，配合已有的 [saiadmin](saiadmin/SKILL.md)、[saicode](saicode/SKILL.md) 等开发规范使用。
+
+> **更新时间**：2026-11-16
+
+### 功能与默认要求
+
+- 安装、升级自动完成必要的宿主接入，例如语言注册与插件入口，不要求用户手工改文件或额外运行接入脚本。
+- 优先使用宿主注册机制或正式生命周期钩子；必要时核实安装顺序，由 Phinx 迁移调用幂等接入服务。包含预检、备份、失败回退与已知旧接入接管。
+- 卸载先检查业务数据，再清理插件拥有的资源和宿主片段，保留用户其它改动；不支持的宿主结构明确报错。
+- 前端遵守宿主明暗主题、主色、组件和多语言约定；切换语言不丢失未保存业务输入，不改写用户画布配色。
+- 提供可反复创建的独立 Docker 实验室，隔离源码、网络、数据库和依赖卷，支持 MySQL / PostgreSQL 测试。
+- 提供 ZIP 打包校验、Phinx 首装/升级示例，以及可迁移性自检；验收涵盖首装、重复上传、升级、卸载重装和失败恢复。
+
+自动接入仅处理必要的源码注册与安装生命周期；依赖安装和管理端构建仍沿用宿主原有流程。具体插件支持哪些宿主版本、数据库及浏览器行为，须以最终 ZIP 实测为准。
+
+### 安装与调用
+
+Codex 首次安装示例，将完整 skill 目录放入 skills 目录，保留其中的 `references`、`scripts` 和 `assets`：
+
+```sh
+git clone https://github.com/guozhijian611/phpDevelopmentAgentSkills.git
+cd phpDevelopmentAgentSkills
+mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
+cp -R ./saiadmin6-plugin "${CODEX_HOME:-$HOME/.codex}/skills/"
+```
+
+安装后在新会话中调用，例如：
+
+```text
+使用 $saiadmin6-plugin 开发 SaiAdmin 6 独立插件。
+先检查我提供的宿主源码与安装器版本，前端遵守宿主主题和多语言约定。
+安装、升级自动完成必要接入，不要要求用户手动跑接入脚本。
+在独立 Docker 环境中验证最终 ZIP 的首次安装、升级、卸载清理及失败恢复。
+```
+
+使用其它支持 skills 的 Agent 时，将整个目录放入其对应的技能目录。直接运行下述辅助脚本不要求先安装 skill。
+
+### 运行示例与自检
+
+以下命令在本仓库根目录执行，需要 Python 3.9+；完整自检还需要 Docker Compose，但不会启动业务容器：
+
+```sh
+# 生成 1.0.0 首装包和 1.0.1 升级包，输出到仓库外
+python3 saiadmin6-plugin/scripts/build_example.py --output-dir ../saiadmin6-plugin-examples
+
+# 验证搬移后的脚本、示例 ZIP、非法包拒绝、源码排除及双库 Compose 配置
+python3 saiadmin6-plugin/scripts/self_test.py
+
+# 没有 Docker 时仅做文件级检查
+python3 saiadmin6-plugin/scripts/self_test.py --skip-docker
+```
+
+示例包是安装器/Phinx 验证夹具，不是可直接用于生产的完整业务插件。运行真实安装测试时还需准备明确指定的 SaiAdmin 6 源码基线、Docker 和依赖下载网络；脚本不依赖此前会话的临时目录、账号或端口。自检通过不等于业务插件已通过双库安装和浏览器验收。
+
+| 参考 | 内容 |
+| --- | --- |
+| [插件契约](saiadmin6-plugin/references/plugin-contract.md) | ZIP 允许路径、安装状态、迁移、依赖与权限 |
+| [自动接入与卸载](saiadmin6-plugin/references/automatic-integration.md) | 生命周期落点、幂等、备份、升级接管、卸载和失败回退 |
+| [前端集成约定](saiadmin6-plugin/references/frontend-conventions.md) | 宿主主题、多语言及运行时切换要求 |
+| [Docker 实验室](saiadmin6-plugin/references/docker-lab.md) | 基线准备、独立环境、上传安装和定向清理 |
+| [验收矩阵](saiadmin6-plugin/references/acceptance.md) | 首装、升级、卸载、自动接入、主题、多语言和权限 |
+| [来源与验证范围](saiadmin6-plugin/references/sources-and-validation.md) | 已核对版本、历史实测及独立分发边界 |
+
+---
+
 ## unibest
 
 基于 unibest 官方文档生成的 uni-app 多端开发技能，包含脚手架创建、路由配置、tabbar 策略、UI 库、请求封装、App 打包和 CLI 开发规范。
