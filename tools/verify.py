@@ -11,6 +11,12 @@ def run(args):
     return r.stdout
 
 def main():
+    if (ROOT/'.git').exists():
+        entries=run(['git','ls-files','--stage','-z']).split('\0')
+        links={item.split('\t',1)[1] for item in entries if item.startswith('160000 ')}
+        configured=run(['git','config','-f','.gitmodules','--get-regexp',r'^submodule\..*\.path$'])
+        paths={line.split(maxsplit=1)[1] for line in configured.splitlines()}
+        assert links==paths,'Gitlinks and .gitmodules paths must match'
     skills=sorted(ROOT.glob('*/SKILL.md'))+sorted((ROOT/'btpanel/assets').rglob('SKILL.md'))
     allowed={'name','description','metadata','license','allowed-tools'}
     for f in skills:

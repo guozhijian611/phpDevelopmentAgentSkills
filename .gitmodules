@@ -1,0 +1,11 @@
+[submodule "reference-unibest-base"]
+	path = 参考手册/unibest
+	url = https://github.com/feige996/unibest.git
+	branch = base
+[submodule "reference-unibest-main"]
+	path = 参考手册/unibest-main
+	url = https://github.com/feige996/unibest.git
+	branch = main
+[submodule "reference-unibest-docs"]
+	path = 参考手册/unibest-docs
+	url = https://github.com/unibest-tech/unibest-docs.git
