@@ -7,7 +7,7 @@
 | Skill | 用途 | 本次更新（2026-11-16） |
 | --- | --- | --- |
 | [saiadmin](saiadmin/SKILL.md) | SaiAdmin 6 业务分层、权限与页面开发 | 主题、多语言、迁移及插件发行分工 |
-| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入与生命周期 | 保留自动接入、备份、升级/卸载保护和独立 Docker 验证 |
+| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 自动接入、升级/卸载保护、独立 Docker 和交互登录上传 CLI |
 | [saicode](saicode/SKILL.md) | 表装载、字段/关联、CRUD 生成与撤回 | 可搬移 CLI、独立帮助、预检、生成所有权与撤回保护 |
 | [webman](webman/SKILL.md) | Webman 服务、路由、进程与数据库 | 2.1 协程/连接池、事务与请求隔离，2.2 路由边界 |
 | [thinkorm](thinkorm/SKILL.md) | ThinkORM 查询、模型、关联和事务 | 区分 3.x/4.x、Entity 分层与宿主适配 |
@@ -60,6 +60,26 @@ npx skills add aaPanel/btpanel-skills
 
 配套 skills 在 `btpanel/assets/bt-skills/`，按官方说明选择所需项目部署或排障技能。仓库自检仅验证完整性、语法和帮助入口，不执行宝塔安装器、不连接服务器、不写入 Agent 的 MCP 凭据配置。
 
+## SaiStore 开发者后台 CLI
+
+`saiadmin6-plugin` 现包含零额外依赖的 `saistore.py`，通过已核对的开发者后台接口登录、管理应用草稿、上传图片和插件 ZIP、登记版本，并可单独提交审核。
+
+```sh
+python3 saiadmin6-plugin/scripts/saistore.py --help
+# 当前后台是 HTTP：明确接受明文传输后才加此选项；不会关闭 HTTPS 证书校验
+python3 saiadmin6-plugin/scripts/saistore.py --allow-http auth login
+python3 saiadmin6-plugin/scripts/saistore.py auth status
+python3 saiadmin6-plugin/scripts/saistore.py --allow-http apps list
+python3 saiadmin6-plugin/scripts/saistore.py upload --zip /path/to/plugin.zip \
+  --app-id 9 --notes-file /path/to/changes.md --dry-run
+python3 saiadmin6-plugin/scripts/saistore.py --allow-http upload --zip /path/to/plugin.zip \
+  --app-id 9 --notes-file /path/to/changes.md
+```
+
+账号、密码和验证码由用户在本机交互终端输入，密码不回显、不保存。成功后 access/refresh token 按 API 地址隔离保存在私有配置目录，后续命令自动使用；不在聊天或命令参数中提交密码，不把令牌写入仓库。当前未核对到刷新接口，保存 refresh token 不等于自动刷新，过期时重新提示登录。
+
+上传前核对包、应用标识与重复版本；上传后写版本并读回确认，回执支持有界恢复。上传不会自动提交审核，`submit-review` 是独立命令。首次应用资料、图片回执、HTTP/HTTPS 边界及全部命令见 [登录与上传说明](saiadmin6-plugin/references/saistore-upload.md)。CLI 登录和商店写入的回归使用本地 HTTP 夹具，真实账号登录/上传需用户另行验收；本轮没有修改真实商店应用。
+
 ## SaiCode 辅助 CLI
 
 帮助可在任意目录执行，不要求宿主或数据库：
@@ -107,6 +127,6 @@ uv run --with PyYAML python tools/verify.py
 uv run --with PyYAML python tools/verify.py --skip-docker
 ```
 
-验证包括 skill 元数据/本地引用、宝塔上游文件完整性、Python/PHP 语法、独立 CLI 帮助、SaiCode 临时宿主回归、插件脚本迁移与示例 ZIP。GitHub Actions 执行同一检查。测试不代表每个框架 API 或业务插件均已通过真实数据库、浏览器或生产验收；历史实测与本轮文件/夹具检查分开记录。
+验证包括 skill 元数据/本地引用、宝塔上游文件完整性、Python/PHP 语法、独立 CLI 帮助、SaiCode 临时宿主回归、SaiStore 本机 HTTP 协议回归、插件脚本迁移与示例 ZIP。GitHub Actions 执行同一检查。测试不代表每个框架 API 或业务插件均已通过真实数据库、浏览器或生产验收；历史实测与本轮文件/夹具检查分开记录。
 
 仓库根 `参考手册/` 保留历史离线资料，不作为当前上游版本保证，也不是单独安装 skill 的必需依赖。其中三个 unibest 参考源码子模块的来源记录于 `.gitmodules`，默认非递归克隆不会下载它们。需要源码时按各 skill 的版本记录使用用户项目或官方锁定链接。宝塔遵循其目录内 MIT LICENSE；其它材料保留原有来源，第三方文档/代码的权利以其上游许可为准。

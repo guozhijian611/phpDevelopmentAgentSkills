@@ -44,6 +44,7 @@ def main():
     run(['php',ROOT/'saicode/scripts/saicode_generate.php','--help'])
     run([sys.executable,ROOT/'btpanel/scripts/bt_mcp_setup.py','--help'])
     run([sys.executable,ROOT/'saicode/tests/test_cli.py'])
+    run([sys.executable,ROOT/'saiadmin6-plugin/tests/test_saistore.py'])
     run([sys.executable,ROOT/'saiadmin6-plugin/scripts/self_test.py',*(['--skip-docker'] if a.skip_docker else [])])
-    print('PASS '+str(len(skills))+' skill manifests, local links, exact official btpanel snapshot, Python/PHP syntax, CLI help, SaiCode ownership/recovery and portable plugin examples')
+    print('PASS '+str(len(skills))+' skill manifests, local links, exact official btpanel snapshot, Python/PHP syntax, CLI help, SaiCode ownership/recovery, SaiStore local protocol tests and portable plugin examples')
 if __name__=='__main__':main()

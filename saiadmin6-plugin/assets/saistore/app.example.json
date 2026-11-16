@@ -1,0 +1,13 @@
+{
+  "title": "Example 插件",
+  "appname": "example",
+  "about": "替换为经过验证的真实插件简介",
+  "type": 1,
+  "logo": "https://cdn.example.com/replace-logo.png",
+  "screenshots": ["https://cdn.example.com/replace-screenshot.png"],
+  "support": ["2"],
+  "price": 0,
+  "total_price": 0,
+  "status": 1,
+  "content": "# Example\n替换为真实功能、安装方式、兼容范围和已完成验证。"
+}

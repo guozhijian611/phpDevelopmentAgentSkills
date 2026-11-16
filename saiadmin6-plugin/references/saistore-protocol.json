@@ -1,0 +1,110 @@
+{
+  "checked_at": "2026-11-16",
+  "page": "http://manage.saithink.top/#/saistore/develop/app",
+  "base_url": "http://manage.saithink.top/prod",
+  "https_observation": "certificate hostname mismatch; verification was not bypassed",
+  "live_read_only": [
+    "GET /core/captcha; code=200, data has uuid/image/result; result ignored",
+    "Browser GET /app/saistore/admin/develop/StoreApp/index?page=1&limit=10; HTTP 200"
+  ],
+  "asset_contract": {
+    "captcha": {
+      "method": "GET",
+      "path": "/core/captcha"
+    },
+    "login": {
+      "method": "POST",
+      "path": "/core/login",
+      "json_fields": [
+        "username",
+        "password",
+        "code",
+        "uuid"
+      ],
+      "response_fields": [
+        "access_token",
+        "refresh_token"
+      ]
+    },
+    "auth_header": "Authorization: Bearer <access_token>",
+    "upload_image": {
+      "method": "POST",
+      "path": "/core/system/uploadImage",
+      "multipart_field": "file"
+    },
+    "apps_root": "/app/saistore/admin/develop/StoreApp/",
+    "upload": {
+      "method": "POST",
+      "action": "uploadFile",
+      "multipart_field": "file",
+      "observed_ui_max_mib": 10
+    },
+    "add_version": {
+      "method": "POST",
+      "action": "addVersion",
+      "fields": [
+        "app_id",
+        "version",
+        "type",
+        "remark",
+        "file_path",
+        "status"
+      ]
+    },
+    "version_types": {
+      "major": 1,
+      "feature": 2,
+      "fix": 3
+    },
+    "support_options": {
+      "saiadmin 5.x": "1",
+      "saiadmin 6.x": "2",
+      "saimulti 5.x": "3",
+      "saimulti 6.x": "4",
+      "unknown": "5"
+    },
+    "submit_review": {
+      "method": "POST",
+      "action": "submitReview",
+      "json_fields": [
+        "id"
+      ]
+    }
+  },
+  "public_assets": {
+    "index-DPntohPP.js": {
+      "url": "http://manage.saithink.top/assets/index-DPntohPP.js",
+      "sha256": "73edacc4774b21d2b9373cce1650168e19e85bfc1da0a772e73c1af2060a110a"
+    },
+    "index-CvZVhaRt.js": {
+      "url": "http://manage.saithink.top/assets/index-CvZVhaRt.js",
+      "sha256": "cd13c176cafda06f4f5869054ce03b0903e714caa29208015076e4c4bd37b84f"
+    },
+    "app-C3XGlliz.js": {
+      "url": "http://manage.saithink.top/assets/app-C3XGlliz.js",
+      "sha256": "de96593e9c4f92c63ea9abacb673b0084c0acd478455e2ebf76e86fa3923cf4d"
+    },
+    "edit-dialog.vue_vue_type_script_setup_true_lang-BJdHH3Vg.js": {
+      "url": "http://manage.saithink.top/assets/edit-dialog.vue_vue_type_script_setup_true_lang-BJdHH3Vg.js",
+      "sha256": "e72215ef4fd1467bb1fd1537e192a0f5f238d235dda24b03a571d8cec8e63821"
+    },
+    "version-edit.vue_vue_type_script_setup_true_lang-CEv2bxdr.js": {
+      "url": "http://manage.saithink.top/assets/version-edit.vue_vue_type_script_setup_true_lang-CEv2bxdr.js",
+      "sha256": "22bd71e66ab9fbc0b2a5b5375b2887c482d105cc2ba55d5e362ef61994a4aad3"
+    },
+    "index-g9lCZkCn.js": {
+      "url": "http://manage.saithink.top/assets/index-g9lCZkCn.js",
+      "sha256": "f45b7f52d728ffcb0a7d353e363cca8702043fbf2b5c32b49c1ad424e099e9d8"
+    }
+  },
+  "refresh_endpoint": null,
+  "refresh_note": "No refresh call in captured frontend or confirmed endpoint; save refresh_token but do not invent refresh requests.",
+  "not_live_verified": [
+    "CLI credential login",
+    "authenticated image/ZIP upload",
+    "app creation",
+    "version creation/readback by CLI",
+    "review submission",
+    "refresh endpoint"
+  ]
+}

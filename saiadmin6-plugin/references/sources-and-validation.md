@@ -40,3 +40,9 @@ Board Studio 在 SaiAdmin 6.1.5 / saipackage 6.1.0 的已验证 Phinx 安装分�
 Skill已迁移到新目录执行self_test.py，通过两版示例ZIP生成、兼容字段校验、敏感文件/符号链接拒绝、MySQL及PostgreSQL Compose配置、源码排除规则和重载补丁幂等检查。没有使用旧测试目录的文件。附带脚本只依赖Python标准库；Docker Compose是环境验证所需外部命令。新建实验室需要明确的--source输入，示例打包不需要SaiAdmin源码。
 
 附带Dockerfile已直接从官方php:8.4-cli-bookworm和composer:2构建成功；容器内验证pdo_mysql、pdo_pgsql、pcntl、posix、zip、intl、mbstring、gd、curl、DOM/XML和redis扩展加载，Composer命令可用。镜像本身不打入Skill压缩包，首次使用需联网构建。
+
+## SaiStore CLI（2026-11-16）
+
+新增 [登录与上传说明](saistore-upload.md) 和 [协议证据](saistore-protocol.json)。核对真实后台可见表单、已登录列表请求与公开前端资源，公开验证码接口实测成功。CLI 由用户手工输入验证码和隐藏密码，将 access/refresh token 成对保存到工作区外的私有目录；没有可确认的刷新路由时不猜测调用。
+
+本机 HTTP 夹具覆盖登录/cookie、密码与令牌脱敏、权限/站点绑定、HTTP/重定向边界、ZIP 预检、multipart、版本/图片/回执与独立审核。未用真实账号验证 CLI 登录或提交任何真实应用/版本/审核，不能把夹具测试写成商店实测。真实登录由用户在终端完成，真实写入仅在具体应用、包和目标范围已明确授权后执行。

@@ -28,7 +28,7 @@ def main():
                 raise AssertionError('Invalid input accepted: '+script)
             return result
         run('build_example.py', '--output-dir', root/'output')
-        for name in ('lab.py', 'package.py', 'fix_reload.py', 'build_example.py'):
+        for name in ('lab.py', 'package.py', 'fix_reload.py', 'build_example.py', 'saistore.py'):
             run(name, '--help')
         for version, count in [('1.0.0', 1), ('1.0.1', 2)]:
             with zipfile.ZipFile(root/'output'/('labphinx-'+version+'.zip')) as archive:

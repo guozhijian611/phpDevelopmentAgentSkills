@@ -1,4 +1,4 @@
 interface:
   display_name: "SaiAdmin 6 插件开发"
-  short_description: "开发和打包 SaiAdmin 6 插件，自动接入宿主并通过隔离 Docker 验证升级和卸载"
-  default_prompt: "使用 $saiadmin6-plugin 开发默认安装升级时自动接入的插件，并在独立 Docker 环境中验证首次导入、卸载清理和失败恢复。"
+  short_description: "开发验证 SaiAdmin 6 插件，自动接入宿主，并通过交互登录 CLI 上传商店版本"
+  default_prompt: "使用 $saiadmin6-plugin 开发和验证插件，安装升级自动接入；需要上传商店时使用 CLI 交互登录、保存本地令牌并核对版本回执。"

@@ -1,6 +1,6 @@
 ---
 name: saiadmin6-plugin
-description: 开发、打包和验证 SaiAdmin 6.x 的 saipackage 插件，默认在安装和升级时自动完成宿主接入，并使用独立 Docker 环境验证卸载清理与失败恢复。适用于插件发行包及其生命周期，不替代业务项目自身开发规范。
+description: 开发、打包和验证 SaiAdmin 6.x 插件，默认自动接入宿主，使用独立 Docker 验证生命周期；通过交互式 CLI 登录 SaiStore、保存令牌并上传插件版本或提交审核。
 ---
 
 # SaiAdmin 6.x 插件开发
@@ -51,5 +51,13 @@ description: 开发、打包和验证 SaiAdmin 6.x 的 saipackage 插件，默�
 ## 交付
 
 提供 ZIP、校验值、支持版本/数据库、所用基线与实际验收结果。区分容器启动、逻辑层验证、HTTP 上传、浏览器业务验收；未执行的项目明确标记。实验室结束只对记录的项目执行 `down -v --remove-orphans`，不运行全局 prune。保留需用户验收的实验室及访问地址，销毁其余测试容器；临时目录可留作证据。
+
+## SaiStore 开发者后台上传
+
+用户要求上传到 SaiThink 开发者后台时，先读 [登录与上传 CLI](references/saistore-upload.md)，核对目标站点、应用 ID、最终 ZIP 和更新日志。使用 `scripts/saistore.py`：无有效登录时提示用户在本机交互终端输入用户名、密码和图形验证码，成功后按站点隔离保存 access/refresh token；后续命令自动读取本地会话，不在聊天索要密码、输出令牌或把凭据放入工作区。
+
+验证码由用户读取图片后输入，禁止利用响应中的 result 字段代答；密码仅通过隐藏终端输入且不保存。默认验证 HTTPS，当前后台的 HTTP 访问需显式 --allow-http，不自动忽略证书错误。非交互环境缺少登录时，提供准确的 auth login 命令，让用户在本机终端完成，不能伪造登录或导出浏览器凭据来替代 CLI 登录。
+
+先 `upload --dry-run` 形成明确计划，再按用户已经授权的上传范围执行。区分应用草稿、图片上传、ZIP 文件上传、版本记录、提交审核与审核通过；只要求上传时不自动提交审核。检查重复版本和应用标识，读回版本确认成功；未知写入结果不得盲目重试，按私有回执核对后使用 --resume。保存 refresh token 不等于已验证刷新接口；当前未发现可确认的刷新路由，令牌过期重新登录，不猜测接口。
 
 来源与本次验证范围见 [sources-and-validation.md](references/sources-and-validation.md)。
