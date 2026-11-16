@@ -1,6 +1,6 @@
 ---
 name: saiadmin6-plugin
-description: 开发、打包和验证 SaiAdmin 6.x 插件，默认自动接入宿主，使用独立 Docker 验证生命周期；通过交互式 CLI 登录 SaiStore、保存令牌并上传插件版本或提交审核。
+description: 开发、打包和验证 SaiAdmin 6.x 插件，默认接入系统菜单、接口及角色数据权限，遵守主题和多语言并自动集成宿主；使用独立 Docker 验证生命周期，通过交互式 CLI 登录 SaiStore 并上传版本或提交审核。
 ---
 
 # SaiAdmin 6.x 插件开发
@@ -12,6 +12,15 @@ description: 开发、打包和验证 SaiAdmin 6.x 插件，默认自动接入�
 1. 读取目标仓库规则、composer.lock、实际 `plugin/saipackage` 和前端 package.json。确认 SaiAdmin/saipackage 都是 6.x，记录版本、基线提交和前端目录。仅看线上 `/plugin/` 文档会误用 5.x 路径。
 2. 阅读 [插件契约](references/plugin-contract.md)。目标安装器的 `getAllowedPath()`、`unpack()`、`install()`、`uninstall()` 是包路径和状态转换的事实源；运行副本与 vendor 可能不一致，勿用更新依赖覆盖本地补丁。
 3. 新插件在隔离开发副本运行 `php webman sai:plugin <app>`；已有插件保留自身约定。按现有 BaseController、BaseLogic、BaseModel、验证器和权限中间件开发，勿假设命令会生成业务 CRUD。
+
+## 系统权限与数据范围（默认接入）
+
+开发前必须阅读 [权限点与 DataScope 接入](references/permissions-data-scope.md)。复用宿主账号、角色、菜单、按钮及后端鉴权；按业务实体确定记录可见范围，不能只隐藏按钮或只加一个 `$scope = true` 就宣称完成。
+
+- 插件自己的菜单、按钮/API 权限点随安装与版本迁移幂等注册，前端与后端使用相同编码；普通角色须经授权才可操作。复用系统角色的数据权限配置，不给每个插件复制一套角色/部门管理。
+- 适用创建者/部门范围的业务表具备可信的 `created_by`，启用宿主已核对的 DataScope。新增归属来自服务端，普通更新不可转移所有者；部门范围、租户和业务归属共同生效。共享资源或采用其它归属策略时明确策略与不适用原因，不静默关闭隔离。
+- 列表、详情、修改、删除之外，导出、统计、联表、批量、自定义 SQL 和嵌套资源也必须使用同一数据范围。确认当前 ORM/基类的实际覆盖，缺少能力时声明依赖或实现插件内受测适配，不盲目覆盖核心或要求手动执行参考包 SQL。
+- 用有相同功能权限、不同数据范围的受限账号直接请求接口验证；包括越权 ID、伪造归属、混合批次与权限变更后的缓存。验收同时覆盖菜单权限和记录范围；卸载仅清理插件自己的权限资源。
 
 ## 前端主题与多语言（必须遵守）
 

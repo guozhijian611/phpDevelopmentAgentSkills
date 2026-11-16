@@ -173,12 +173,13 @@ class [Table]Controller extends BaseController
 namespace plugin\your_plugin\app\admin\logic\[business];
 
 use plugin\your_plugin\app\model\[business]\[Table];
-use plugin\saiadmin\basic\think\BaseLogic;  // 或 eloquent\BaseLogic
+use plugin\saiadmin\basic\think\BaseLogic;  // 本模板使用已核对 DataScope 的 ThinkORM 基类
 
 class [Table]Logic extends BaseLogic
 {
-    // 若当前项目启用了数据权限，且该业务表需要按创建人/部门过滤，则开启：
-    // protected bool $scope = true;
+    // 生成前必须确定数据策略；创建者/部门隔离默认接入，先核对宿主兼容性。
+    // 以下用于已确认兼容的创建者/部门隔离实体；共享资源须说明替代策略。
+    protected bool $scope = true;
 
     public function __construct()
     {
@@ -995,12 +996,16 @@ php webman sai:upgrade
 
 ### DataScope 数据权限
 
-- 需要数据权限控制的业务表必须有 `created_by` 字段。
-- 对应 Logic 必须继承 ThinkORM 版 `BaseLogic`。
-- 如果项目已接入 DataScope，且该业务模块需要受数据权限控制，对应 Logic 必须显式开启 `protected bool $scope = true;`。
-- 角色 `data_scope` 和 `sa_system_role_dept` 要同时检查。
-- 不能只用超级管理员验证数据范围；必须用普通角色账号验证。
-- SaiCode 重新生成后，重点检查 `$scope` 是否被覆盖。
+- 逐实体确认记录策略；适用创建者/部门隔离的业务默认接入，共享资源说明非创建者策略。客户/负责人/租户字段另加服务端业务约束，不能由 created_by 替代。
+- 给定 DataScope 6.x 参考只有 ThinkORM 版；核对实际 BaseLogic 的 `$scope` 与 `userDataScope()`，业务 Logic 显式开启 `protected bool $scope = true;`。缺少能力时声明依赖或实现插件内受测适配，不静默关闭，不覆盖整份核心。
+- created_by 字段、插入事件和只读保护必须实际生效；新建/导入归属由服务端设置，普通更新排除所有者/租户字段。直接 SQL/批量操作不保证走模型事件。
+- 角色 data_scope 的 1–5 分别为全部、自定义部门、本部门、本部门及子部门、本人；核对实际角色—部门表（给定包为 sa_system_role_dept）及缓存失效。参考包多角色选数值最大范围，不是并集；相同自定义范围只选一个角色，不擅自扩权。
+- getList/getAll/read/edit/destroy 在 scope=true 时处理范围；search 和 add 本身不做范围校验。自定义 SQL、聚合/导出、联表、批量及子资源须显式接入，不先查全量后过滤，联表注意 created_by 歧义，写入不能绕回未受限查询。
+- 给定包存在空角色默认全部、userIds 实例复用累积以及数据权限按钮/后端编码不一致，应在目标接入中处理并测试。无身份/角色、空自定义部门、缺失部门或无效范围默认拒绝/空结果；管理员豁免按宿主已确认身份策略实现。
+- 菜单/按钮与后端 API 权限独立于记录范围；共享角色配置入口 core:role:data 不应被业务插件复制/卸载。授权管理接口还要校验目标角色与可授予菜单/部门范围，不能只有按钮授权。
+- 用普通账号分别验证五种范围、越权 ID、伪造归属、混合批次、缓存变更与连续切换身份；管理员单账号不能代替。SaiCode 重新生成后，检查 `$scope`、自定义过滤及权限点是否被覆盖。
+
+以上参考为用户提供的 DataScope ZIP（SHA256 6b2ae4caac60404d5878bfa8505b45ae59884455c43232a641d46eea85cb0ae6，2026-11-16 检查），不是所有宿主版本保证。未执行其固定 ID 的 install.sql，也不把核心覆盖包当成标准业务 ZIP。
 
 ### SaiCode 生成后检查
 

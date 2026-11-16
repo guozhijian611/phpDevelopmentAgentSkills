@@ -6,9 +6,9 @@
 
 | Skill | 用途 | 本次更新（2026-11-16） |
 | --- | --- | --- |
-| [saiadmin](saiadmin/SKILL.md) | SaiAdmin 6 业务分层、权限与页面开发 | 主题、多语言、迁移及插件发行分工 |
-| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 自动接入、升级/卸载保护、独立 Docker 和交互登录上传 CLI |
-| [saicode](saicode/SKILL.md) | 表装载、字段/关联、CRUD 生成与撤回 | 可搬移 CLI、独立帮助、预检、生成所有权与撤回保护 |
+| [saiadmin](saiadmin/SKILL.md) | SaiAdmin 6 业务分层、权限与页面开发 | 系统与记录范围权限、主题、多语言及插件发行分工 |
+| [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 菜单/API 与 DataScope 默认接入、升级/卸载保护、独立 Docker 和上传 CLI |
+| [saicode](saicode/SKILL.md) | 表装载、字段/关联、CRUD 生成与撤回 | 生成后权限接入、可搬移 CLI、预检、生成所有权与撤回保护 |
 | [webman](webman/SKILL.md) | Webman 服务、路由、进程与数据库 | 2.1 协程/连接池、事务与请求隔离，2.2 路由边界 |
 | [thinkorm](thinkorm/SKILL.md) | ThinkORM 查询、模型、关联和事务 | 区分 3.x/4.x、Entity 分层与宿主适配 |
 | [artdesignpro](artdesignpro/SKILL.md) | Vue 后台、useTable、主题和国际化 | 修正实际 hook 路径，核对泛型与宿主差异 |
@@ -43,8 +43,16 @@ cp -R ./saiadmin6-plugin "${CODEX_HOME:-$HOME/.codex}/skills/"
 ```text
 使用 $saiadmin6-plugin 开发可独立安装的插件。
 安装和升级自动完成必要接入，不要求用户额外跑接入脚本。
+复用系统账号/角色，注册菜单、按钮/API 权限点，按业务接入角色数据范围。
+列表、详情、导出/统计和批量操作使用一致范围，用普通账号验证越权请求。
 在独立 Docker 环境验证最终 ZIP 的首次安装、升级、卸载保护与失败恢复。
 ```
+
+### 系统权限与数据权限
+
+插件开发默认接入宿主菜单、按钮及服务端 API 权限，并按业务实体接入 DataScope 的全部、自定义部门、本部门、本部门及子部门、本人五种范围。新增归属由服务器确定，普通更新不可修改所有者；自定义 SQL、导出/统计、联表、批量与子资源同样受限。租户、客户或负责人边界另外叠加；共享资源明确采用的策略。
+
+自身权限点随安装/升级幂等注册，保留已有授权，卸载不删除共享角色、部门或系统数据权限入口。缺少能力时核对正式依赖或插件内适配，不要求手工运行参考包 SQL。详见 [权限点与 DataScope 接入](saiadmin6-plugin/references/permissions-data-scope.md)，包含给定参考包的实际差异、缓存与五范围验收；仅安装 DataScope、隐藏按钮或设置 scope 属性不代表业务验收通过。本次核对了用户提供的参考包，并用临时 PHP 替身复现三个基类行为，未把它安装到业务系统，也未宣称完成真实数据库/浏览器权限验收。
 
 ### 宝塔官方同步方式
 
@@ -115,7 +123,7 @@ python3 saiadmin6-plugin/scripts/self_test.py --skip-docker
 
 两版 Phinx 示例包用于首装、升级测试，不是生产业务插件。真实测试还需用户明确指定的 SaiAdmin 基线、Docker、Composer/前端依赖和网络。环境每轮独立创建，只清理对应 Compose 项目，不运行全局 prune。
 
-详细说明：[安装器契约](saiadmin6-plugin/references/plugin-contract.md)、[自动接入与卸载](saiadmin6-plugin/references/automatic-integration.md)、[前端约定](saiadmin6-plugin/references/frontend-conventions.md)、[Docker 实验室](saiadmin6-plugin/references/docker-lab.md)、[验收矩阵](saiadmin6-plugin/references/acceptance.md)。源码接入自动化不等于自动完成宿主依赖安装、生产构建或部署。
+详细说明：[安装器契约](saiadmin6-plugin/references/plugin-contract.md)、[自动接入与卸载](saiadmin6-plugin/references/automatic-integration.md)、[系统与数据权限](saiadmin6-plugin/references/permissions-data-scope.md)、[前端约定](saiadmin6-plugin/references/frontend-conventions.md)、[Docker 实验室](saiadmin6-plugin/references/docker-lab.md)、[验收矩阵](saiadmin6-plugin/references/acceptance.md)。源码接入自动化不等于自动完成宿主依赖安装、生产构建或部署。
 
 ## 仓库验证
 

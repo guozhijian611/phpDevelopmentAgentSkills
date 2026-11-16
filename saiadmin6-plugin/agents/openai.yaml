@@ -1,4 +1,4 @@
 interface:
   display_name: "SaiAdmin 6 插件开发"
-  short_description: "开发验证 SaiAdmin 6 插件，自动接入宿主，并通过交互登录 CLI 上传商店版本"
-  default_prompt: "使用 $saiadmin6-plugin 开发和验证插件，安装升级自动接入；需要上传商店时使用 CLI 交互登录、保存本地令牌并核对版本回执。"
+  short_description: "开发验证 SaiAdmin 6 插件，接入系统与数据权限、自动集成宿主及 CLI 上传"
+  default_prompt: "使用 $saiadmin6-plugin 开发插件，默认接入系统菜单、接口与角色数据权限，安装升级自动集成；需要上传商店时用 CLI 交互登录并核对版本回执。"
