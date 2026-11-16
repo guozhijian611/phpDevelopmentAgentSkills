@@ -2,11 +2,9 @@
 
 本参考用于在 unibest 项目里快速定位该改哪个文件。优先结合用户项目的实际文件检查，不要只按模板假设。
 
-## 本地源码
+## 源码获取与独立使用
 
-- `参考手册/unibest`：官方 `base` 模板浅克隆，当前用于查看用户项目结构。
-- `参考手册/unibest-main`：官方 `main` 分支浅克隆，当前用于查看 `packages/cli` 和 Feature 注入逻辑。
-- `参考手册/unibest-docs/docs`：官方文档源码。
+独立安装的 skill 不附带仓库根的参考手册；先查看用户项目源码，按 [版本与来源](versions.md) 的锁定链接或官方 base/main 获取参考。可选的仓库历史快照分别为 参考手册/unibest（base）、unibest-main（main/CLI）、unibest-docs/docs；缺少这些目录不应使 skill 无法使用，也不要求用户还原旧会话路径。
 
 ## 顶层配置
 

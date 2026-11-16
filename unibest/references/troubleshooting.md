@@ -69,7 +69,7 @@ ERR PNPM INVALID WORKSPACE CONFIGURATION packages field missing or empty
 Cannot start service: Host version "0.20.2" does not match binary version "0.25.5"
 ```
 
-修复：按 FAQ 将 `package.json` 中 `esbuild` 版本对齐到 `0.20.2`，然后重新安装依赖。具体版本仍以当前项目 lock 和 SDK 匹配为准。
+先比较 esbuild 宿主 JS 与二进制实际版本、安装平台及 lock，使用匹配目标 SDK 的锁定版本重装。0.20.2 是旧 FAQ 个案，不能不经核对给当前项目降级。
 
 ## 支付宝小程序运行报错
 
@@ -198,13 +198,13 @@ SVG：
 
 ## Vue Official 插件报错
 
-文档曾记录最新可用版本为 `v2.2.8`，`v2.2.10` 可能报错。遇到编辑器类型服务异常时，先尝试回退 Vue Official 插件版本并关闭自动更新。
+旧 FAQ 的 v2.2.8/v2.2.10 是特定历史问题，不代表当前扩展推荐版本。先检查扩展日志、Vue/TypeScript/SDK 版本与对应 issue，只有证据匹配时才有界回退，不默认永久关闭更新。
 
 ## [plugin:uni:mp-using-component] Unexpected token S in JSON
 
 旧项目可能是 `@uni-helper/vite-plugin-uni-pages` 小版本问题。
 
-修复：尝试回退到文档记录的 `0.2.20`，再重新安装依赖。新项目则先对照 lock 文件和当前模板版本。
+先对照 lock、目标 SDK 和当前插件源码。0.2.20 只是旧文档个案，只有错误与该历史版本一致时才考虑回退，不默认覆盖新项目依赖。
 
 ## Git commit 被 husky / commitlint 拦住
 

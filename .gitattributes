@@ -1,0 +1,2 @@
+# Preserve the official vendored snapshot, including upstream CRLF and whitespace.
+btpanel/** -text -whitespace

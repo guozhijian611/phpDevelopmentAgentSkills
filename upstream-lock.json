@@ -1,0 +1,33 @@
+{
+  "btpanel": {
+    "repository": "https://github.com/aaPanel/btpanel-skills",
+    "commit": "4e069027109537f8b704ec2d3b1b1ce60be5c1e5",
+    "checked_at": "2026-11-16",
+    "files": {
+      "LICENSE": "1ebd1a60c5272089148bef76667290dc02fb838fb1a4e2b9259463e685adaa7d",
+      "README.md": "b0ae429e38441c8207c226262119c9b2c99f533218e7b459301faf04c13f76c8",
+      "SKILL.md": "cd87dff502aae1d4a36051f2beaf5e8d77afc0f59ff9bc531df6f87e0e927007",
+      "assets/bt-skills/bt-go-project-deploy/SKILL.md": "e4b644c2b5a17a231177e0519c41172d004d01792ce9bae0c16ddf54cf3d5b32",
+      "assets/bt-skills/bt-html-project-deploy/SKILL.md": "226cb4a5b284e763ce54a0a08fe8b3d8102f43557e68e1f3d2248ad54d341123",
+      "assets/bt-skills/bt-java-project-deploy/SKILL.md": "cc7a19e2c8dd29ce16de4973512f2f45856d0a1ac8933a5532ae9d189e9be034",
+      "assets/bt-skills/bt-node-project-deploy/SKILL.md": "42d12e6d9775704c95d1db1227e147235222eaca446f5aebbf6a78ef4d231312",
+      "assets/bt-skills/bt-python-project-deploy/SKILL.md": "97c281c267e14701a3a934526aa0a6d4e577db90923a1bbc5f853f618d7af893",
+      "assets/bt-skills/bt-reverse-proxy/SKILL.md": "376abd692a2b26a4fd661318b3eacfff7ee1dec0a16d96a9d69354423a9dc620",
+      "assets/bt-skills/bt-website-troubleshoot/SKILL.md": "4f6296b7985f9de0bcd0d9dd5d3a7788d069ee7f17aaf839ac1ecf5b4d08d855",
+      "references/vendor-sources.md": "35aff23d91bf95a0245b07885d9a509ce2fa77f405c2c4506eedd7b903a79733",
+      "scripts/bt_mcp_setup.py": "30642863f094dd3d316e58c43e8afb92c057a23104f6bdb40936f8e3f66b1c83"
+    }
+  },
+  "checked_sources": {
+    "checked_at": "2026-11-16",
+    "revisions": {
+      "Daymychen/art-design-pro@main": "f3aaf58eec1a0e988f162352c33862327a484f95",
+      "top-think/think-orm@4.0": "d13ab1b282fe5a8c9d09c676193bed5891f7d1bd",
+      "walkor/webman-framework@master": "263ef955d8ba6a0cb6fbc1bd0912589ed67c0c8d",
+      "feige996/unibest@base": "8277fab1eccf7464d4fe63310309ad5c35cc2ce9",
+      "feige996/unibest@main": "6ec319432a59b3c1e8e1bf401a56c4a8a8d9dab4",
+      "element-plus/element-plus@dev": "3b5d0ad35b1d309a3430b49db9be1369f0966321",
+      "saithink/saiadmin@6.x": "598178195a27a9a024a3cd20a0188d3117b9e09f"
+    }
+  }
+}

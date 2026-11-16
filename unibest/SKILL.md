@@ -16,7 +16,7 @@ description: unibest / create-unibest uni-app 开发指南。用于创建、维�
 - 生成接口代码、配置 OpenAPI、处理 `vue-query`、`uni.request`、上传、多后端地址。
 - 参与 `create-unibest` CLI 开发或新增 Feature。
 
-本地参考文档在 `参考手册/unibest-docs/docs`，本地模板源码在 `参考手册/unibest`。官方站点是 https://unibest.tech/ ，代码仓库是 https://github.com/feige996/unibest ，文档仓库是 https://github.com/unibest-tech/unibest-docs 。
+独立安装无需仓库根的参考手册；源码快照、获取方式和历史 FAQ 适用边界见 [版本与来源](references/versions.md)。官方站点是 https://unibest.tech/ ，代码仓库是 https://github.com/feige996/unibest ，文档仓库是 https://github.com/unibest-tech/unibest-docs 。
 
 ## 深度参考
 
@@ -291,10 +291,10 @@ Vite 环境变量只暴露 `VITE_` 前缀变量。优先使用 `import.meta.env`
 - 微信开发者工具打开 timeout：通常不是编译失败，配置 `WECHAT_DEVTOOLS_CLI_PATH` 或手动导入 `dist/dev/mp-weixin`，并开启微信开发者工具服务端口。
 - 微信小程序 WXSS 编译出现 unexpected `\`：优先升级 Node 到 22+；仍不行可回退微信开发者工具版本或使用模板 lock 文件。
 - `pnpm i` 报 `ERR PNPM INVALID WORKSPACE CONFIGURATION packages field missing or empty`：Node 18 + pnpm 9 组合可能触发，优先升级 Node 22，其次 pnpm 10。
-- iOS 模拟器报 esbuild host/binary version mismatch：按 FAQ 将 `esbuild` 版本对齐到 `0.20.2`。
+- iOS 模拟器报 esbuild host/binary version mismatch：先核对锁文件和实际二进制版本；`0.20.2` 只适用于对应历史 FAQ，不默认给新 SDK 降级。
 - 支付宝小程序运行报错：开发工具勾选“本地开发跳过 ES5 转译”。
 - `defineModel` 仅 H5 支持；小程序/App 端不要默认使用。
-- Vue Official 可用版本曾建议停在 `v2.2.8`，遇到 `v2.2.10` 报错时先回退。
+- Vue Official 的旧版本回退建议仅适用于对应历史错误；先检查当前扩展、SDK、类型工具及官方 issue，不把 v2.2.8 固定为通用方案。
 - `[plugin:uni:mp-using-component] Unexpected token S in JSON`：旧项目可尝试回退 `@uni-helper/vite-plugin-uni-pages@0.2.20`。
 - 严格 git 提交检查不想要：可删除或注释 `.husky`。
 

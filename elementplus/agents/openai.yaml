@@ -1,0 +1,4 @@
+interface:
+  display_name: "Element Plus 组件开发"
+  short_description: "按目标项目版本使用Element Plus 组件开发技能，核对实际源码、宿主约定与验证结果"
+  default_prompt: "使用 $elementplus 完成当前开发任务，先核对项目版本和约定，再实现并验证。"

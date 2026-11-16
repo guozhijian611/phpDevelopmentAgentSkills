@@ -29,7 +29,7 @@ CLI 当前支持的 UI 库：`none`、`wot-ui-v2`、`wot-ui`、`uview-pro`、`sa
 3. 如果要作为首页，确保只有一个页面配置 `type: 'home'`。
 4. 如果是分包页面，放到 `src/pages-demo` 或自定义分包目录，并在 `vite.config.ts` 的 `UniPages({ subPackages: [...] })` 中配置。
 
-页面模板：
+页面结构示例：颜色和文案接入目标项目的主题/i18n；未启用 i18n 的项目按实际能力处理，不另建孤立语言状态。
 
 ```vue
 <script setup lang="ts">
@@ -43,8 +43,8 @@ definePage({
 </script>
 
 <template>
-  <view class="min-h-100vh bg-#f7f8fa p-24rpx">
-    <view class="rounded-12rpx bg-white p-24rpx">
+  <view class="min-h-100vh p-24rpx">
+    <view class="rounded-12rpx p-24rpx">
       订单列表
     </view>
   </view>

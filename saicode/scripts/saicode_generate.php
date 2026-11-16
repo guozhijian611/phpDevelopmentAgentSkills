@@ -13,19 +13,10 @@
  *   php saicode_generate.php generate --id=表ID                            — 生成代码到模块
  *   php saicode_generate.php all --table=表名 --namespace=xx --package=xx  — 一键全流程
  * 
- * 注意: 必须在 server/ 目录下执行此脚本
+ * 宿主通过 --server-dir、SERVER_DIR 或当前目录探测；--help 不加载宿主
  */
 
-// ========== 引导 webman 框架环境 ==========
-$serverDir = getenv('SERVER_DIR') ?: realpath(__DIR__ . '/../../../../server');
-if (!$serverDir || !is_dir($serverDir)) {
-    fwrite(STDERR, "错误: 找不到 server 目录，请在 server/ 目录下执行或设置 SERVER_DIR 环境变量\n");
-    exit(1);
-}
-
-chdir($serverDir);
-require_once $serverDir . '/vendor/autoload.php';
-require_once $serverDir . '/support/bootstrap.php';
+require_once __DIR__.'/GenerationLedger.php';
 
 use plugin\saicode\app\logic\TableLogic;
 use plugin\saicode\app\logic\DbLogic;
@@ -33,45 +24,37 @@ use plugin\saicode\app\model\Table;
 use plugin\saicode\app\model\Column;
 use support\think\Db;
 
-// ========== 解析命令行参数 ==========
-$args = parseArgs($argv);
+try { $args = parseArgs($argv); } catch (Throwable $error) { fwrite(STDERR, '错误：'.$error->getMessage()."\n"); exit(1); }
 $command = $args['command'] ?? '';
-
-switch ($command) {
-    case 'list':
-        cmdList();
-        break;
-    case 'menus':
-        cmdMenus($args);
-        break;
-    case 'load':
-        cmdLoad($args);
-        break;
-    case 'config':
-        cmdConfig($args);
-        break;
-    case 'columns':
-        cmdColumns($args);
-        break;
-    case 'relation':
-        cmdRelation($args);
-        break;
-    case 'preview':
-        cmdPreview($args);
-        break;
-    case 'generate':
-        cmdGenerate($args);
-        break;
-    case 'rollback':
-        cmdRollback($args);
-        break;
-    case 'all':
-        cmdAll($args);
-        break;
-    default:
-        printUsage();
-        break;
-}
+if (!$command || isset($args['help']) || in_array($command, ['help','-h','--help'], true)) { printUsage(); exit(0); }
+$commands = ['list','menus','load','config','columns','relation','preview','generate','rollback','all'];
+if (!in_array($command, $commands, true)) { fwrite(STDERR, "未知命令：".$command."\n"); exit(1); }
+try {
+    if (isset($args['dry-run']) && !in_array($command,['generate','rollback'],true)) throw new RuntimeException('--dry-run 仅用于 generate 或 rollback；其它命令请使用其只读查询形式');
+    $requested = $args['server-dir'] ?? getenv('SERVER_DIR');
+    $candidates = $requested ? [$requested] : [getcwd(), getcwd().'/server'];
+    $serverDir = null;
+    foreach ($candidates as $candidate) {
+        $real = realpath((string)$candidate);
+        if ($real && is_file($real.'/vendor/autoload.php') && is_file($real.'/support/bootstrap.php') && is_dir($real.'/plugin/saicode')) { $serverDir=$real; break; }
+    }
+    if (!$serverDir) throw new RuntimeException('找不到准备好的 SaiCode 宿主，请指定 --server-dir /path/to/server（需要 vendor、support/bootstrap.php 和 plugin/saicode）');
+    chdir($serverDir);
+    require_once $serverDir.'/vendor/autoload.php';
+    require_once $serverDir.'/support/bootstrap.php';
+    $dispatch = ['list'=>'cmdList','menus'=>'cmdMenus','load'=>'cmdLoad','config'=>'cmdConfig','columns'=>'cmdColumns','relation'=>'cmdRelation','preview'=>'cmdPreview','generate'=>'cmdGenerate','rollback'=>'cmdRollback','all'=>'cmdAll'];
+    // One helper writer per host; preview/read commands never create runtime files.
+    $lock = null;
+    $mutates = in_array($command, ['load','generate','all'], true) || ($command==='rollback' && isset($args['apply'])) || ($command==='config' && count(array_diff(array_keys($args), ['command','id','server-dir']))>0) || ($command==='columns' && isset($args['set'])) || ($command==='relation' && (isset($args['add']) || isset($args['del'])));
+    if ($mutates && !isset($args['dry-run'])) {
+        $dir=$serverDir.'/runtime/saicode-skill';
+        if (!is_dir($dir) && !mkdir($dir,0700,true) && !is_dir($dir)) throw new RuntimeException('无法创建 CLI 锁目录');
+        $lock=fopen($dir.'/lock','c');
+        if (!$lock || !flock($lock, LOCK_EX)) throw new RuntimeException('无法锁定 SaiCode CLI');
+    }
+    try { $dispatch[$command]($args); }
+    finally { if ($lock) { flock($lock,LOCK_UN); fclose($lock); } }
+} catch (Throwable $error) { fwrite(STDERR, '错误：'.$error->getMessage()."\n"); exit(1); }
 
 // ========== 命令实现 ==========
 
@@ -167,11 +150,11 @@ function cmdLoad(array $args): int
 
     if (empty($tableName)) {
         fwrite(STDERR, "错误: 缺少 --table 参数\n");
-        return 1;
+        throw new RuntimeException('缺少 --table 参数');
     }
 
     // 检查表是否已装载
-    $existing = Table::where('table_name', $tableName)->findOrEmpty();
+    $existing = Table::where('table_name', $tableName)->where('source', $source)->findOrEmpty();
     if (!$existing->isEmpty()) {
         echo "表 {$tableName} 已存在 (ID: {$existing->id})，跳过装载\n";
         return (int)$existing->id;
@@ -181,13 +164,15 @@ function cmdLoad(array $args): int
     // 检查表是否存在
     $tableInfo = null;
     if (!empty($source)) {
-        $list = Db::connect($source)->query('show table status where name=:name', ['name' => $tableName]);
+        $connection = Db::connect($source);
+        if ($connection->getConfig('type') !== 'mysql') throw new RuntimeException('此辅助 CLI 的 load 仅支持 MySQL；其它数据库使用宿主生成器的已验证装载接口');
+        $list = $connection->query('show table status where name=:name', ['name' => $tableName]);
     } else {
         $list = Db::query('show table status where name=:name', ['name' => $tableName]);
     }
     if (empty($list)) {
         fwrite(STDERR, "错误: 数据表 {$tableName} 不存在于数据源 {$source}\n");
-        return 1;
+        throw new RuntimeException('数据源中没有目标表');
     }
     $tableInfo = [
         'name' => $list[0]['Name'],
@@ -198,7 +183,7 @@ function cmdLoad(array $args): int
     $logic->loadTable([$tableInfo], $source);
 
     // 获取刚装载的表ID
-    $loaded = Table::where('table_name', $tableName)->findOrEmpty();
+    $loaded = Table::where('table_name', $tableName)->where('source', $source)->findOrEmpty();
     echo "✅ 成功装载表: {$tableName} (ID: {$loaded->id})\n";
     return (int)$loaded->id;
 }
@@ -236,6 +221,8 @@ function cmdConfig(array $args): void
         'is_full'        => '是否全屏(1=否/2=是)',
         'span'           => '表单栅格宽度(1-24)',
     ];
+
+    if (isset($args['namespace']) && in_array(strtolower((string)$args['namespace']), ['saiadmin','saicode','saipackage'], true)) throw new RuntimeException('不能将业务代码生成到核心插件');
 
     // 处理 package 缩写参数
     if (isset($args['package'])) {
@@ -456,128 +443,40 @@ function cmdRelation(array $args): void
 /**
  * 撤回生成：删除生成的文件 + 菜单权限
  */
+function menuSnapshot(int $id): array
+{
+    $parents = Db::table('sa_system_menu')->where('generate_id', $id)->select()->toArray();
+    $rows = []; $queue = $parents;
+    while ($queue) {
+        $row = array_shift($queue); $key=(int)$row['id'];
+        if (isset($rows[$key])) continue;
+        ksort($row); $rows[$key]=$row;
+        foreach (Db::table('sa_system_menu')->where('parent_id',$key)->select()->toArray() as $child) $queue[]=$child;
+    }
+    ksort($rows); return array_values($rows);
+}
+
 function cmdRollback(array $args): void
 {
-    $id = $args['id'] ?? '';
-    if (empty($id)) {
-        fwrite(STDERR, "错误: 缺少 --id 参数\n");
-        exit(1);
-    }
-
-    $table = Table::findOrEmpty($id);
-    if ($table->isEmpty()) {
-        fwrite(STDERR, "错误: 未找到 ID={$id} 的表记录\n");
-        exit(1);
-    }
-
-    $ns = $table->namespace;
-    $pkg = $table->package_name;
-    $cls = $table->class_name;
-    $biz = $table->business_name;
-    $tpl = $table->template;
-    $genPath = $table->generate_path ?: 'saiadmin-artd';
-
-    if (empty($ns) || empty($pkg) || empty($cls)) {
-        fwrite(STDERR, "错误: 表配置不完整，无法确定生成路径\n");
-        exit(1);
-    }
-
-    $DS = DIRECTORY_SEPARATOR;
-    $serverDir = base_path();
-    $projectDir = dirname($serverDir);
-
-    // === 后端文件 ===
-    if ($tpl === 'plugin') {
-        $rootPath = $serverDir . $DS . 'plugin' . $DS . $ns . $DS . 'app';
-        $adminPath = $DS . 'admin';
-    } else {
-        $rootPath = $serverDir . $DS . 'app' . $DS . $ns;
-        $adminPath = '';
-    }
-    $subPath = $DS . $pkg;
-
-    $backendFiles = [
-        $rootPath . $adminPath . $DS . 'controller' . $subPath . $DS . $cls . 'Controller.php',
-        $rootPath . $adminPath . $DS . 'logic' . $subPath . $DS . $cls . 'Logic.php',
-        $rootPath . $adminPath . $DS . 'validate' . $subPath . $DS . $cls . 'Validate.php',
-        $rootPath . $DS . 'model' . $subPath . $DS . $cls . '.php',
-    ];
-
-    // === 前端文件 ===
-    $frontRoot = $projectDir . $DS . $genPath . $DS . 'src' . $DS . 'views' . $DS . 'plugin' . $DS . $ns;
-    $frontendFiles = [
-        $frontRoot . $subPath . $DS . $biz . $DS . 'index.vue',
-        $frontRoot . $subPath . $DS . $biz . $DS . 'modules' . $DS . 'edit-dialog.vue',
-        $frontRoot . $subPath . $DS . $biz . $DS . 'modules' . $DS . 'table-search.vue',
-        $frontRoot . $subPath . $DS . $biz . $DS . 'modules' . $DS . 'view-dialog.vue',
-        $frontRoot . $DS . 'api' . $subPath . $DS . $biz . '.ts',
-    ];
-
-    $allFiles = array_merge($backendFiles, $frontendFiles);
-
-    echo "将要撤回表 [{$table->table_name}] (ID={$id}) 的生成结果:\n\n";
-
-    // 删除文件
-    $deletedCount = 0;
-    $skippedCount = 0;
-    foreach ($allFiles as $file) {
-        $rel = str_replace($projectDir . $DS, '', $file);
-        if (file_exists($file)) {
-            unlink($file);
-            echo "✅ 删除: {$rel}\n";
-            $deletedCount++;
-        } else {
-            echo "⏭️  跳过(不存在): {$rel}\n";
-            $skippedCount++;
-        }
-    }
-
-    // 清理空目录
-    $dirsToCheck = [
-        $frontRoot . $subPath . $DS . $biz . $DS . 'modules',
-        $frontRoot . $subPath . $DS . $biz,
-        $rootPath . $adminPath . $DS . 'controller' . $subPath,
-        $rootPath . $adminPath . $DS . 'logic' . $subPath,
-        $rootPath . $adminPath . $DS . 'validate' . $subPath,
-        $rootPath . $DS . 'model' . $subPath,
-    ];
-    foreach ($dirsToCheck as $dir) {
-        if (is_dir($dir) && count(scandir($dir)) === 2) { // 只有 . 和 ..
-            rmdir($dir);
-        }
-    }
-
-    // === 删除菜单权限 ===
-    $parentMenu = Db::table('sa_system_menu')
-        ->where('generate_id', $id)
-        ->whereNull('delete_time')
-        ->findOrEmpty();
-
-    $menuCount = 0;
-    if (!empty($parentMenu)) {
-        // 先删子菜单(权限按钮)
-        $childCount = Db::table('sa_system_menu')
-            ->where('parent_id', $parentMenu['id'])
-            ->delete();
-        // 再删父菜单
-        Db::table('sa_system_menu')
-            ->where('id', $parentMenu['id'])
-            ->delete();
-        $menuCount = $childCount + 1;
-        echo "\n✅ 删除菜单权限: {$menuCount} 条\n";
-    } else {
-        echo "\n⏭️  无关联菜单记录\n";
-    }
-
-    // === 可选: 清理 saicode 记录 ===
-    if (isset($args['clean'])) {
-        Column::where('table_id', $id)->delete();
-        Table::where('id', $id)->delete();
-        echo "✅ 已清理 saicode_table 和 saicode_column 记录\n";
-    }
-
-    echo "\n🗑️  撤回完成! 删除文件: {$deletedCount}, 跳过: {$skippedCount}, 菜单: {$menuCount}\n";
-    echo "提示: 请重启 webman 服务使路由变更生效\n";
+    $id=(int)($args['id']??0);
+    if ($id<1) throw new RuntimeException('缺少有效 --id');
+    $table=Table::findOrEmpty($id);
+    if ($table->isEmpty()) throw new RuntimeException('生成配置不存在');
+    $ledger=new GenerationLedger(base_path(),$id,$table->toArray());
+    foreach ($ledger->targets() as $file) echo "撤回候选：".$file."\n";
+    if (!isset($args['apply']) || isset($args['dry-run'])) { echo "只读预览；执行已核对的撤回时加 --apply。只支持本工具已记录且未被修改的文件和菜单。\n"; return; }
+    $ledger->preflight(true);
+    $record=$ledger->read();
+    if (menuSnapshot($id)!==$record['menus']) throw new RuntimeException('生成后的菜单被修改，拒绝删除');
+    $ledger->rollback(static function() use ($id,$record,$args) {
+        Db::transaction(static function() use ($id,$record,$args) {
+            if (menuSnapshot($id)!==$record['menus']) throw new RuntimeException('撤回期间菜单发生变化');
+            $ids=array_column($record['menus'],'id');
+            if ($ids) Db::table('sa_system_menu')->whereIn('id',$ids)->delete();
+            if (isset($args['clean'])) { Column::where('table_id',$id)->delete(); Table::where('id',$id)->delete(); }
+        });
+    });
+    echo "撤回完成；文件备份保留在 runtime/saicode-skill，按宿主约定刷新权限缓存及重载服务。\n";
 }
 
 /**
@@ -606,8 +505,18 @@ function cmdGenerate(array $args): void
         exit(1);
     }
 
+    $ledger = new GenerationLedger(base_path(), (int)$id, $table->toArray());
+    $ledger->preflight();
+    $previous = $ledger->read();
+    $menusBefore = menuSnapshot((int)$id);
+    if ($previous ? $menusBefore !== $previous['menus'] : (bool)$menusBefore) throw new RuntimeException('菜单已有内容或生成后被修改，拒绝覆盖');
+    if (isset($args['dry-run'])) {
+        foreach ($ledger->targets() as $path) echo "生成候选：".$path."\n";
+        echo "只读预检；未写入文件或菜单。\n"; return;
+    }
     $logic = new TableLogic();
     $logic->generateFile($id);
+    $ledger->record(menuSnapshot((int)$id));
 
     echo "✅ 代码生成成功!\n";
     echo "  表名: {$table->table_name}\n";
@@ -628,6 +537,7 @@ function cmdGenerate(array $args): void
  */
 function cmdAll(array $args): void
 {
+    if (isset($args['dry-run'])) throw new RuntimeException('all 会装载/修改生成配置；只读预检请使用已配置 ID 的 generate --dry-run 或 preview');
     $tableName = $args['table'] ?? '';
     if (empty($tableName)) {
         fwrite(STDERR, "错误: 缺少 --table 参数\n");
@@ -672,15 +582,19 @@ function cmdAll(array $args): void
 
 function parseArgs(array $argv): array
 {
-    $result = ['command' => $argv[1] ?? ''];
-    for ($i = 2; $i < count($argv); $i++) {
-        $arg = $argv[$i];
-        if (str_starts_with($arg, '--')) {
-            $parts = explode('=', substr($arg, 2), 2);
-            $key = $parts[0];
-            $value = $parts[1] ?? true;
-            $result[$key] = $value;
-        }
+    $result=[];
+    for ($i=1;$i<count($argv);$i++) {
+        $arg=$argv[$i];
+        if ($arg==='-h') { $result['help']=true; continue; }
+        if (str_starts_with($arg,'--')) {
+            $parts=explode('=',substr($arg,2),2);$key=$parts[0];
+            if (isset($parts[1])) $value=$parts[1];
+            elseif (in_array($key,['help','apply','dry-run','clean','add'],true)) $value=true;
+            elseif (isset($argv[$i+1]) && !str_starts_with($argv[$i+1],'--')) $value=$argv[++$i];
+            else throw new InvalidArgumentException('选项需要值：--'.$key);
+            $result[$key]=$value;
+        } elseif (!isset($result['command'])) $result['command']=$arg;
+        else throw new InvalidArgumentException('未识别参数：'.$arg);
     }
     return $result;
 }
@@ -705,17 +619,20 @@ SaiCode CLI 代码生成脚本
   relation --id=表ID --del=名称     删除模型关联
   preview --id=表ID                 预览生成的代码
   generate --id=表ID                生成代码到模块(文件+菜单)
-  rollback --id=表ID                撤回生成(删除文件+菜单)
-  rollback --id=表ID --clean        撤回并清理 saicode 记录
+  rollback --id=表ID                预览撤回；加 --apply 才执行所有权检查后的清理
+  rollback --id=表ID --apply --clean 撤回并清理 saicode 记录
   all     --table=表名 ...          一键全流程(load+config+generate)
 
 通用选项:
-  --source=mysql                    数据源名称 (默认: mysql)
-  --namespace=saiadmin              应用名称
+  --server-dir=/path/to/server       显式宿主目录；也可使用 SERVER_DIR 或当前目录探测
+  --dry-run                         预检 generate / rollback，不写文件或菜单
+  --apply                           明确执行 rollback（默认只读预览）
+  --source=mysql                    数据源名称 (默认: mysql；load 当前只支持 MySQL)
+  --namespace=example              应用名称
   --package=system                  功能模块分组
   --template=plugin                 应用类型: app 或 plugin (默认: app)
   --generate_path=saiadmin-artd     前端项目目录名 (默认: saiadmin-artd)
-  --belong_menu_id=80               上级菜单ID (默认: 80)
+  --belong_menu_id=ID               从 menus 查询的上级菜单 ID
   --generate_menus=index,save,...   生成的功能列表
   --tpl_category=single             模板类型: single 或 tree
   --component_type=1                组件类型: 1=弹窗 2=抽屉 3=标签页
