@@ -1,0 +1,4 @@
+interface:
+  display_name: "iv8 网页协议分析"
+  short_description: "检查并创建本地环境，验证网页 JS 签名、会话复用与独立 HTTP 取数"
+  default_prompt: "使用 $iv8 分析目标网站，先检查或创建项目环境，再验证网页 JavaScript 和独立 HTTP 请求，遇到人机验证引导我操作。"

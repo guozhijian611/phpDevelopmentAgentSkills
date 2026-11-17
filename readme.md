@@ -1,10 +1,10 @@
 # PHP 与前端开发 Agent Skills
 
-面向 PHP / Webman / SaiAdmin、Vue 后台和 uni-app 的开发 skills，以及直接同步的宝塔官方 skill。安装所需的完整目录，Agent 按目标项目源码、锁文件和约定工作；不会因为更新本仓库就自动升级你的业务项目。
+面向 PHP / Webman / SaiAdmin、Vue 后台和 uni-app 的开发 skills，以及网页协议分析和直接同步的宝塔官方 skill。安装所需的完整目录，Agent 按目标项目源码、锁文件和约定工作；不会因为更新本仓库就自动升级你的业务项目。
 
 ## 技能目录
 
-| Skill | 用途 | 本次更新（2026-11-16） |
+| Skill | 用途 | 用途与维护内容 |
 | --- | --- | --- |
 | [saiadmin](saiadmin/SKILL.md) | SaiAdmin 6 业务分层、权限与页面开发 | 系统与记录范围权限、主题、多语言及插件发行分工 |
 | [saiadmin6-plugin](saiadmin6-plugin/SKILL.md) | 可安装 ZIP、自动接入、生命周期与商店上传 | 权限升级映射、五范围双库 API 示例、PG 排错、独立 Docker 和上传 CLI |
@@ -14,6 +14,7 @@
 | [artdesignpro](artdesignpro/SKILL.md) | Vue 后台、useTable、主题和国际化 | 修正实际 hook 路径，核对泛型与宿主差异 |
 | [elementplus](elementplus/SKILL.md) | Element Plus 组件与交互 | 版本门槛、弃用 API、主题/locale 和无障碍 |
 | [unibest](unibest/SKILL.md) | uni-app 多端项目与 CLI | 核对 base/main 快照，独立源码获取及历史排错边界 |
+| [iv8](iv8/SKILL.md) | 网页 JS 编码/签名、会话复用与独立 HTTP 验证 | 环境缺失引导、离线探针、人工验证恢复与五类历史案例 |
 | [btpanel](btpanel/SKILL.md) | 宝塔面板与 MCP 接入、运维和部署 | 直接同步 aaPanel 官方新版，保持上游内容不变 |
 
 自维护 skills 的入口保留决策和约束，长 API/模板表移到各自 `references` 按需读取。具体版本、官方链接和核对边界见各目录的 `references/versions.md`；`upstream-lock.json` 记录本次核对的源码提交。
