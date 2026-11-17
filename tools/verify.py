@@ -35,9 +35,11 @@ def main():
             assert 25<=len(ui['short_description'])<=64,metadata
     for target in re.findall(r'\]\(([^)]+)\)',(ROOT/'readme.md').read_text()):
         if '://' not in target and not target.startswith('#'):assert (ROOT/target).exists(),target
-    lock=json.loads((ROOT/'upstream-lock.json').read_text())['btpanel'];vendor=ROOT/'btpanel'
-    actual={str(f.relative_to(vendor)):hashlib.sha256(f.read_bytes()).hexdigest() for f in vendor.rglob('*') if f.is_file()}
-    assert actual==lock['files'],'Official btpanel snapshot drifted'
+    locks=json.loads((ROOT/'upstream-lock.json').read_text())
+    for name in ('btpanel','modern-web-guidance'):
+        lock=locks[name];vendor=ROOT/name
+        actual={str(f.relative_to(vendor)):hashlib.sha256(f.read_bytes()).hexdigest() for f in vendor.rglob('*') if f.is_file()}
+        assert actual==lock['files'],f'Official {name} snapshot drifted'
     for folder in [f.parent for f in ROOT.glob('*/SKILL.md')]+[ROOT/'tools']:
         for f in folder.rglob('*.py'):ast.parse(f.read_text(),filename=str(f))
         for f in folder.rglob('*.php'):run(['php','-l',f])
@@ -46,5 +48,5 @@ def main():
     run([sys.executable,ROOT/'saicode/tests/test_cli.py'])
     run([sys.executable,ROOT/'saiadmin6-plugin/tests/test_saistore.py'])
     run([sys.executable,ROOT/'saiadmin6-plugin/scripts/self_test.py',*(['--skip-docker'] if a.skip_docker else [])])
-    print('PASS '+str(len(skills))+' skill manifests, local links, exact official btpanel snapshot, Python/PHP syntax, CLI help, SaiCode ownership/recovery, SaiStore local protocol tests and portable plugin examples')
+    print('PASS '+str(len(skills))+' skill manifests, local links, exact official vendor snapshots, Python/PHP syntax, CLI help, SaiCode ownership/recovery, SaiStore local protocol tests and portable plugin examples')
 if __name__=='__main__':main()

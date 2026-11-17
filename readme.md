@@ -15,6 +15,7 @@
 | [elementplus](elementplus/SKILL.md) | Element Plus 组件与交互 | 版本门槛、弃用 API、主题/locale 和无障碍 |
 | [unibest](unibest/SKILL.md) | uni-app 多端项目与 CLI | 核对 base/main 快照，独立源码获取及历史排错边界 |
 | [iv8](iv8/SKILL.md) | 网页 JS 编码/签名、会话复用与独立 HTTP 验证 | 环境缺失引导、离线探针、人工验证恢复与五类历史案例 |
+| [modern-web-guidance](modern-web-guidance/SKILL.md) | 现代 Web 平台、CSS、性能与无障碍实践 | 原样同步 GoogleChrome 官方 skill 与指南，通过官方 CLI 检索和读取 |
 | [btpanel](btpanel/SKILL.md) | 宝塔面板与 MCP 接入、运维和部署 | 直接同步 aaPanel 官方新版，保持上游内容不变 |
 
 自维护 skills 的入口保留决策和约束，长 API/模板表移到各自 `references` 按需读取。具体版本、官方链接和核对边界见各目录的 `references/versions.md`；`upstream-lock.json` 记录本次核对的源码提交。
@@ -48,6 +49,26 @@ cp -R ./saiadmin6-plugin "${CODEX_HOME:-$HOME/.codex}/skills/"
 列表、详情、导出/统计和批量操作使用一致范围，用普通账号验证越权请求。
 在独立 Docker 环境验证最终 ZIP 的首次安装、升级、卸载保护与失败恢复。
 ```
+
+### Modern Web Guidance 官方技能
+
+`modern-web-guidance/` 原样同步 [GoogleChrome 官方仓库](https://github.com/GoogleChrome/modern-web-guidance) 的技能目录，并附上游 Apache-2.0 许可证。来源提交与逐文件 SHA256 记录在 `upstream-lock.json`；本次对应 CLI 包 `modern-web-guidance@1.0.1`。它提供 HTML/CSS、浏览器 API、性能和无障碍指导，不包含 PHP 业务逻辑。
+
+可按上面的目录复制方式安装，也可使用官方安装器（仅安装到 Codex 用户级目录）：
+
+```sh
+npx modern-web-guidance install --global --agent codex --yes
+```
+
+在下一轮对话中使用 `$modern-web-guidance`。按照技能说明先用英文短语检索，再读取匹配指南；CLI 需要 Node.js 22+，首次运行需要网络：
+
+```sh
+npx -y modern-web-guidance@1.0.1 search "responsive data table"
+# 将检索返回的实际 ID 传给 retrieve
+npx -y modern-web-guidance@1.0.1 retrieve "<id>"
+```
+
+官方 skill 默认调用 `@latest`，因此后续 CLI/指南可能更新；仓库内快照由锁文件单独校验。业务项目的浏览器兼容范围仍应按实际要求确定。
 
 ### 系统权限与数据权限
 
